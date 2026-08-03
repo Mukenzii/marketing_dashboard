@@ -16,7 +16,7 @@ import { auth } from "../lib/auth";
 import { authDb as db } from "../lib/db/auth-client";
 import { users, accounts } from "../lib/db/schema";
 
-const DEV_PASSWORD = "Falaq!2026";
+const DEV_PASSWORD = process.env.SEED_PASSWORD ?? "Falaq!2026";
 
 const SEED: { name: string; email: string; role: "ceo" | "pr_manager" }[] = [
   { name: "Dilnoza Karimova", email: "ceo1@falaqnashr.uz", role: "ceo" },

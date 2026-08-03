@@ -25,16 +25,15 @@ ENV DATABASE_URL=postgres://build:build@127.0.0.1:5432/build \
     BETTER_AUTH_URL=http://localhost:3000
 RUN npm run build
 
-# ─────────────────────────── migrator ────────────────────────
-# One-shot container that applies drizzle migrations as the OWNER role.
-# Run before the app starts (see docker-compose).
-FROM node:22-alpine AS migrator
+# ─────────────────────────── tools ───────────────────────────
+# One-shot maintenance image with full node_modules + source: runs drizzle
+# migrations (migrator service) and the user seed scripts (seed service).
+# See docker-compose. Default command applies migrations.
+FROM node:22-alpine AS tools
 WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=deps /app/node_modules ./node_modules
-COPY package.json drizzle.config.ts ./
-COPY drizzle ./drizzle
-COPY lib/db/schema.ts ./lib/db/schema.ts
+COPY . .
 CMD ["npm", "run", "db:migrate"]
 
 # ─────────────────────────── runner ──────────────────────────
