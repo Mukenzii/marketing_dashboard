@@ -15,6 +15,7 @@ import {
   users,
   roles,
   sessions,
+  accounts,
   books,
   metricThresholds,
 } from "@/lib/db/schema";
@@ -418,6 +419,8 @@ const Invite = z.object({
   name: z.string().trim().min(2).max(120),
   email: z.string().email(),
   role: z.string().min(1),
+  // CEO sets the initial password; the user changes it after first login.
+  password: z.string().min(8).max(128),
 });
 export type InviteInput = z.input<typeof Invite>;
 
@@ -436,18 +439,30 @@ export async function inviteUser(
     throw new ForbiddenError("Bu email allaqachon mavjud");
 
   const id = crypto.randomUUID();
+  const now = new Date();
   await authDb.insert(users).values({
     id,
     name: data.name,
     email: data.email,
-    emailVerified: false,
+    emailVerified: true,
     role: data.role,
     status: "active",
+    createdAt: now,
+    updatedAt: now,
   });
 
-  // issue a set-password link (dev: logged to console by lib/auth)
-  await auth.api.requestPasswordReset({
-    body: { email: data.email, redirectTo: "/reset-password" },
+  // Create the credential account with the CEO-set password (hashed by Better
+  // Auth's own hasher) so the user can sign in immediately — no email needed.
+  const ctx = await auth.$context;
+  const hash = await ctx.password.hash(data.password);
+  await authDb.insert(accounts).values({
+    id: crypto.randomUUID(),
+    userId: id,
+    accountId: id,
+    providerId: "credential",
+    password: hash,
+    createdAt: now,
+    updatedAt: now,
   });
 
   await withUser(async (tx) => {

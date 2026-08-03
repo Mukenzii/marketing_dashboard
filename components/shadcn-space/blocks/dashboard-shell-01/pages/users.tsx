@@ -188,10 +188,18 @@ function UserRowActions({
 
 /* ------------------------------- invite user ------------------------------ */
 
+function genPassword(): string {
+  const chars = "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const arr = new Uint32Array(14);
+  crypto.getRandomValues(arr);
+  return Array.from(arr, (n) => chars[n % chars.length]).join("");
+}
+
 function InviteUserSheet({ roles }: { roles: Role[] }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [sent, setSent] = useState(false);
+  const [pwd, setPwd] = useState("");
   const [state, formAction, pending] = useActionState(
     inviteUserAction,
     INITIAL,
@@ -216,7 +224,10 @@ function InviteUserSheet({ roles }: { roles: Role[] }) {
       open={open}
       onOpenChange={(o) => {
         setOpen(o);
-        if (o) setSent(false);
+        if (o) {
+          setSent(false);
+          setPwd(genPassword());
+        }
       }}
     >
       <SheetTrigger render={<Button />}>{uz.users.invite}</SheetTrigger>
@@ -243,6 +254,29 @@ function InviteUserSheet({ roles }: { roles: Role[] }) {
                 </option>
               ))}
             </select>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <FieldLabel>{uz.users.fPassword}</FieldLabel>
+            <div className="flex items-center gap-2">
+              <Input
+                name="password"
+                value={pwd}
+                onChange={(e) => setPwd(e.target.value)}
+                minLength={8}
+                className="h-9 font-mono"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setPwd(genPassword())}
+              >
+                {uz.users.generate}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {uz.users.passwordHint}
+            </p>
           </div>
           {state.error && (
             <p className="text-sm text-rose-500">{state.error}</p>

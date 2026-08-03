@@ -59,6 +59,7 @@ export async function inviteUserAction(
       name: String(fd.get("name") ?? ""),
       email: String(fd.get("email") ?? ""),
       role: String(fd.get("role") ?? "pr_manager"),
+      password: String(fd.get("password") ?? ""),
     });
     revalidatePath(BASE, "layout");
     return { ok: true };
