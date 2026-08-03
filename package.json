@@ -16,6 +16,7 @@
     "db:seed": "node --env-file=.env --import tsx scripts/seed.ts",
     "db:seed:demo": "node --env-file=.env --import tsx scripts/seed-demo.ts",
     "db:seed:team": "node --env-file=.env --import tsx scripts/seed-team.ts",
+    "db:create-admin": "node --env-file=.env --import tsx scripts/create-admin.ts",
     "sync:meta": "node --env-file=.env --conditions=react-server --import tsx scripts/sync-meta.ts"
   },
   "dependencies": {
