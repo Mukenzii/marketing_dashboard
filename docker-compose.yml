@@ -4,8 +4,9 @@
 #   app      — the Next.js standalone server
 #
 # Config comes from a local .env in this directory (see .env.docker.example).
-# Inside the compose network services reach Postgres at db:5432 (the 5433 host
-# mapping is only for tools on your machine).
+# Services reach Postgres over the internal network at db:5432 — it is NOT
+# published to the host, so it never collides with other projects. The app's
+# own host port is APP_PORT (default 3000); override it in .env if 3000 is taken.
 services:
   db:
     image: postgres:18-alpine
@@ -18,8 +19,10 @@ services:
       # consumed by the init script to create the runtime roles
       APP_DB_PASSWORD: ${APP_DB_PASSWORD}
       AUTH_DB_PASSWORD: ${AUTH_DB_PASSWORD}
-    ports:
-      - "5433:5432"
+    # Not published to the host — reached only internally at db:5432, so it can't
+    # clash with other projects. If you want host access (psql/GUI), add e.g.
+    #   ports:
+    #     - "5434:5432"
     volumes:
       # Postgres 18 images store data in a versioned subdir; mount the parent.
       - falaq_pgdata:/var/lib/postgresql
@@ -68,7 +71,7 @@ services:
       META_BUSINESS_ID: ${META_BUSINESS_ID:-}
       META_API_VERSION: ${META_API_VERSION:-v23.0}
     ports:
-      - "3000:3000"
+      - "${APP_PORT:-3000}:3000"
     restart: unless-stopped
 
 volumes:
