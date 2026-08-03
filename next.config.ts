@@ -25,7 +25,10 @@ const csp = [
   "base-uri 'self'",
   "form-action 'self'",
   "object-src 'none'",
-  ...(isProd ? ["upgrade-insecure-requests"] : []),
+  // NOTE: no `upgrade-insecure-requests` — it would force asset requests to
+  // https and break plain-http access (e.g. http://<ip>:3000). All subresources
+  // are same-origin, so it adds nothing. HTTPS is enforced by HSTS once you
+  // serve the app over TLS (e.g. behind Caddy).
 ].join("; ")
 
 const securityHeaders = [
