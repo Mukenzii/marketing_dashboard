@@ -1,6 +1,3 @@
-# syntax=docker/dockerfile:1
-# check=skip=SecretsUsedInArgOrEnv  # builder-stage values below are throwaway placeholders
-
 # ─────────────────────────── deps ───────────────────────────
 # Full dependency install (incl. dev deps: next, drizzle-kit, tsx).
 FROM node:22-alpine AS deps
