@@ -18,7 +18,7 @@ export function NoAccess() {
             {uz.common.noAccessBody}
           </p>
           <Link
-            href="/dashboard-shell-01"
+            href="/dashboard"
             className="mt-1 text-sm text-blue-600 hover:underline dark:text-blue-400"
           >
             {uz.common.backToDashboard}

@@ -12,7 +12,7 @@ export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const hasSession = Boolean(getSessionCookie(request));
 
-  const isDashboard = pathname.startsWith("/dashboard-shell-01");
+  const isDashboard = pathname.startsWith("/dashboard");
 
   // Logged-out visitor to a protected route → login, remembering the target.
   if (isDashboard && !hasSession) {
@@ -31,5 +31,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard-shell-01/:path*", "/login"],
+  matcher: ["/dashboard/:path*", "/login"],
 };

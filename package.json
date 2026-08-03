@@ -14,7 +14,9 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "db:seed": "node --env-file=.env --import tsx scripts/seed.ts",
-    "db:seed:demo": "node --env-file=.env --import tsx scripts/seed-demo.ts"
+    "db:seed:demo": "node --env-file=.env --import tsx scripts/seed-demo.ts",
+    "db:seed:team": "node --env-file=.env --import tsx scripts/seed-team.ts",
+    "sync:meta": "node --env-file=.env --conditions=react-server --import tsx scripts/sync-meta.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",

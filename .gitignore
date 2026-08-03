@@ -28,10 +28,17 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# env files — real secrets stay local; commit only the placeholder template
+# env files — real secrets stay local; commit only the placeholder templates
 .env*
 !.env.example
+!.env.docker.example
+*.pem
+*.key
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# OS / IDE
+.idea/
+.vscode/

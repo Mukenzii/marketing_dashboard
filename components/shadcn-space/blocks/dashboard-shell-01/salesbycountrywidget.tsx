@@ -64,7 +64,7 @@ const SalesByCountryWidget = ({ books }: { books: SpendBook[] }) => {
             <DropdownMenuContent>
               <DropdownMenuItem
                 className="font-normal cursor-pointer"
-                render={<Link href="/dashboard-shell-01/byudjetlar" />}
+                render={<Link href="/dashboard/byudjetlar" />}
               >
                 {uz.byBook.viewBudgets}
               </DropdownMenuItem>

@@ -19,14 +19,14 @@ import { users, accounts } from "../lib/db/schema";
 const DEV_PASSWORD = "Falaq!2026";
 
 const SEED: { name: string; email: string; role: "ceo" | "pr_manager" }[] = [
-  { name: "Dilnoza Karimova", email: "ceo1@falaqnashr.com", role: "ceo" },
-  { name: "Sardor Alimov", email: "ceo2@falaqnashr.com", role: "ceo" },
-  { name: "Aziza Yusupova", email: "manager1@falaqnashr.com", role: "pr_manager" },
-  { name: "Bekzod Rakhimov", email: "manager2@falaqnashr.com", role: "pr_manager" },
-  { name: "Gulnora Sattorova", email: "manager3@falaqnashr.com", role: "pr_manager" },
-  { name: "Jasur Tohirov", email: "manager4@falaqnashr.com", role: "pr_manager" },
-  { name: "Malika Ergasheva", email: "manager5@falaqnashr.com", role: "pr_manager" },
-  { name: "Nodir Qodirov", email: "manager6@falaqnashr.com", role: "pr_manager" },
+  { name: "Dilnoza Karimova", email: "ceo1@falaqnashr.uz", role: "ceo" },
+  { name: "Sardor Alimov", email: "ceo2@falaqnashr.uz", role: "ceo" },
+  { name: "Aziza Yusupova", email: "manager1@falaqnashr.uz", role: "pr_manager" },
+  { name: "Bekzod Rakhimov", email: "manager2@falaqnashr.uz", role: "pr_manager" },
+  { name: "Gulnora Sattorova", email: "manager3@falaqnashr.uz", role: "pr_manager" },
+  { name: "Jasur Tohirov", email: "manager4@falaqnashr.uz", role: "pr_manager" },
+  { name: "Malika Ergasheva", email: "manager5@falaqnashr.uz", role: "pr_manager" },
+  { name: "Nodir Qodirov", email: "manager6@falaqnashr.uz", role: "pr_manager" },
 ];
 
 async function main() {

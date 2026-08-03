@@ -14,6 +14,7 @@ import {
   getSpendByBook,
 } from "@/lib/dal/charts";
 import { listCampaigns } from "@/lib/dal/campaigns";
+import { requireDashboardAccess } from "@/lib/dal/context";
 import { uz, fmtUZS, fmtNumber } from "@/lib/i18n/uz";
 
 const TINTS = [
@@ -36,6 +37,9 @@ function paceColor(p: number | null): string {
 }
 
 export default async function Page() {
+  // Every role except content_team may see the dashboard.
+  await requireDashboardAccess();
+
   const [kpi, trend, split, byBook, campaigns] = await Promise.all([
     getDashboardKpis(),
     getSpendTrend(),
@@ -77,7 +81,7 @@ export default async function Page() {
       percentage: uz.metrics.daily,
       icon: CalendarDays,
       isPositive: true,
-      href: "/dashboard-shell-01/natijalar",
+      href: "/dashboard/natijalar",
     },
     {
       title: uz.panel.activeCampaigns,
@@ -85,7 +89,7 @@ export default async function Page() {
       percentage: `${fmtNumber(kpi.bookCount)}`,
       icon: Megaphone,
       isPositive: true,
-      href: "/dashboard-shell-01/kampaniyalar",
+      href: "/dashboard/kampaniyalar",
     },
   ];
 

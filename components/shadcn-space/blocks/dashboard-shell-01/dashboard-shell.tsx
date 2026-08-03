@@ -38,7 +38,7 @@ export function DashboardShell({
           <SidebarHeader className="py-0 px-4">
             <SidebarMenu>
               <SidebarMenuItem>
-                <Link href="/dashboard-shell-01" className="w-full h-full">
+                <Link href="/dashboard" className="w-full h-full">
                   <Logo />
                 </Link>
               </SidebarMenuItem>

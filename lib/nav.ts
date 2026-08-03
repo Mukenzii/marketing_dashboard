@@ -27,34 +27,39 @@ export type NavItem = {
   isActive?: boolean;
 };
 
-const BASE = "/dashboard-shell-01";
+const BASE = "/dashboard";
 
-// Items every authenticated user sees.
-const MAIN: NavItem[] = [
-  { label: uz.nav.sectionMain, isSection: true },
-  { title: uz.nav.dashboard, iconKey: "dashboard", href: BASE },
-  { title: uz.nav.creatives, iconKey: "creatives", href: `${BASE}/kreativlar` },
-  { title: uz.nav.books, iconKey: "books", href: `${BASE}/kitoblar` },
-  { title: uz.nav.tasks, iconKey: "tasks", href: `${BASE}/vazifalar` },
-  { title: uz.nav.results, iconKey: "results", href: `${BASE}/natijalar` },
-];
+const sectionMain: NavItem = { label: uz.nav.sectionMain, isSection: true };
+const sectionMgmt: NavItem = { label: uz.nav.sectionManagement, isSection: true };
 
-// Privileged-only (CEO) items.
-const MANAGEMENT: NavItem[] = [
-  { label: uz.nav.sectionManagement, isSection: true },
-  { title: uz.nav.campaigns, iconKey: "campaigns", href: `${BASE}/kampaniyalar` },
-  { title: uz.nav.team, iconKey: "team", href: `${BASE}/jamoa` },
-  { title: uz.nav.budgets, iconKey: "budgets", href: `${BASE}/byudjetlar` },
-  { title: uz.nav.users, iconKey: "users", href: `${BASE}/foydalanuvchilar` },
-  { title: uz.nav.settings, iconKey: "settings", href: `${BASE}/sozlamalar` },
-  { title: uz.nav.audit, iconKey: "audit", href: `${BASE}/audit` },
-];
+const I = {
+  dashboard: { title: uz.nav.dashboard, iconKey: "dashboard", href: BASE },
+  creatives: { title: uz.nav.creatives, iconKey: "creatives", href: `${BASE}/kreativlar` },
+  books: { title: uz.nav.books, iconKey: "books", href: `${BASE}/kitoblar` },
+  tasks: { title: uz.nav.tasks, iconKey: "tasks", href: `${BASE}/vazifalar` },
+  results: { title: uz.nav.results, iconKey: "results", href: `${BASE}/natijalar` },
+  campaigns: { title: uz.nav.campaigns, iconKey: "campaigns", href: `${BASE}/kampaniyalar` },
+  team: { title: uz.nav.team, iconKey: "team", href: `${BASE}/jamoa` },
+  budgets: { title: uz.nav.budgets, iconKey: "budgets", href: `${BASE}/byudjetlar` },
+  users: { title: uz.nav.users, iconKey: "users", href: `${BASE}/foydalanuvchilar` },
+  settings: { title: uz.nav.settings, iconKey: "settings", href: `${BASE}/sozlamalar` },
+  audit: { title: uz.nav.audit, iconKey: "audit", href: `${BASE}/audit` },
+} satisfies Record<string, NavItem>;
 
 /**
- * Build the nav for a privilege level ON THE SERVER. Management items are
- * excluded from the payload for non-privileged users — they never reach that
- * browser at all, not hidden with CSS.
+ * Nav is built and filtered ON THE SERVER per role — items a role can't reach
+ * never enter that browser's payload (not merely hidden with CSS).
+ * - content_team: creatives + tasks only (the only restricted role)
+ * - every other role (ceo, head_of_marketing, pr_manager, smm_manager): everything
  */
-export function getNavForRole(isPrivileged: boolean): NavItem[] {
-  return isPrivileged ? [...MAIN, ...MANAGEMENT] : MAIN;
+export function getNavForRole(role: string): NavItem[] {
+  // Only content_team is restricted — it gets Creatives + Tasks and no dashboard.
+  if (role === "content_team") {
+    return [sectionMain, I.creatives, I.tasks];
+  }
+  // Every other role gets the full dashboard.
+  return [
+    sectionMain, I.dashboard, I.creatives, I.books, I.tasks, I.results,
+    sectionMgmt, I.campaigns, I.team, I.budgets, I.users, I.settings, I.audit,
+  ];
 }

@@ -65,8 +65,8 @@ const TopProductTable = ({
   const visible = needle
     ? rows.filter(
         (r) =>
-          r.name.toLowerCase().includes(needle) ||
-          r.sub.toLowerCase().includes(needle),
+          (r.name ?? "").toLowerCase().includes(needle) ||
+          (r.sub ?? "").toLowerCase().includes(needle),
       )
     : rows;
   return (
@@ -165,7 +165,7 @@ const TopProductTable = ({
                             <DropdownMenuItem
                               className="cursor-pointer"
                               render={
-                                <Link href="/dashboard-shell-01/kampaniyalar" />
+                                <Link href="/dashboard/kampaniyalar" />
                               }
                             >
                               {uz.overviewTable.viewCampaigns}

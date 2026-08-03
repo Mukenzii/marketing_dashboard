@@ -28,6 +28,9 @@ export const bookStatus = pgEnum("book_status", [
   "completed",
   "archived",
 ]);
+// PR-manager performance category (A+/A/B/C), auto-derived from 3-month sales
+// with the option to override manually. "new" = freshly launched, no history.
+export const bookCategory = pgEnum("book_category", ["A+", "A", "B", "C", "new"]);
 // Narrowed: ad/"targeting" spend now lives in insights_daily (synced from Meta,
 // immutable). spend_entries is only hand-typed blogger fees & production costs.
 export const spendType = pgEnum("spend_type", ["blogger", "production"]);
@@ -166,6 +169,18 @@ export const books = pgTable(
       .notNull()
       .default("1"),
     status: bookStatus("status").notNull().default("planning"),
+    // --- PR-manager performance tracker (edited by the owning manager) ---
+    category: bookCategory("category"), // A+/A/B/C/new — auto or overridden
+    categoryOverride: boolean("category_override").notNull().default(false),
+    printRun: integer("print_run"), // Nashr soni
+    stockRemaining: integer("stock_remaining"), // Astatka (qoldiq)
+    salesPrevMonth: integer("sales_prev_month"), // Sotuv (oldingi oy)
+    salesCount: integer("sales_count"), // Sotuv (joriy oy) — drives category
+    marketingBudget: numeric("marketing_budget", { precision: 14, scale: 2 }), // Byudjet
+    targetSales: integer("target_sales"), // Target
+    targetBudget: numeric("target_budget", { precision: 14, scale: 2 }), // Target byudjeti
+    targetOtherBook: numeric("target_other_book", { precision: 14, scale: 2 }), // Target boshqa kitobga
+    percent: numeric("percent", { precision: 7, scale: 2 }), // Foiz
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -174,6 +189,34 @@ export const books = pgTable(
       .defaultNow(),
   },
   (t) => [index("books_owner_id_idx").on(t.ownerId)],
+);
+
+// Per-book blogger budgets: how much a PR manager allocates to a blogger and
+// how much was actually spent. Scoped through the owning book (RLS).
+export const bloggers = pgTable(
+  "bloggers",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    bookId: uuid("book_id")
+      .notNull()
+      .references(() => books.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    platform: text("platform"), // Instagram / Telegram / YouTube / …
+    budgetAllocated: numeric("budget_allocated", { precision: 14, scale: 2 })
+      .notNull()
+      .default("0"),
+    spent: numeric("spent", { precision: 14, scale: 2 }).notNull().default("0"),
+    currency: text("currency").notNull().default("UZS"),
+    note: text("note"),
+    createdBy: text("created_by").references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [index("bloggers_book_id_idx").on(t.bookId)],
 );
 
 export const spendEntries = pgTable(
@@ -275,6 +318,13 @@ export const syncStatus = pgEnum("sync_status", [
   "running",
   "success",
   "failed",
+]);
+export const notificationType = pgEnum("notification_type", [
+  "task_assigned",
+  "fatigue",
+  "budget",
+  "sync",
+  "info",
 ]);
 
 export const adAccounts = pgTable("ad_accounts", {
@@ -462,6 +512,8 @@ export const insightsDaily = pgTable(
     ),
     index("insights_daily_campaign_id_idx").on(t.campaignId),
     index("insights_daily_date_idx").on(t.date),
+    // Dashboard/charts filter by entity_type then group/aggregate by date.
+    index("insights_daily_entity_type_date_idx").on(t.entityType, t.date),
   ],
 );
 
@@ -480,6 +532,33 @@ export const syncRuns = pgTable("sync_runs", {
     .notNull()
     .defaultNow(),
 });
+
+// Per-user notification inbox. Task assignments and (deduped) system alerts.
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    type: notificationType("type").notNull().default("info"),
+    tone: text("tone").notNull().default("info"), // alert | warn | info (icon)
+    title: text("title").notNull(),
+    body: text("body"),
+    link: text("link"),
+    // stable key so re-running a generator (e.g. daily sync) never duplicates
+    dedupeKey: text("dedupe_key"),
+    isRead: boolean("is_read").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("notifications_user_idx").on(t.userId, t.isRead),
+    // NULL dedupeKey rows (task assignments) are all distinct → never deduped
+    uniqueIndex("notifications_user_dedupe_uq").on(t.userId, t.dedupeKey),
+  ],
+);
 
 /* -------------------------------------------------------------------------- */
 /*  Team work                                                                  */

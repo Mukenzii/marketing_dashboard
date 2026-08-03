@@ -1,6 +1,11 @@
-# Local development Postgres for the Falaq dashboard.
-# Runtime connects as the restricted `falaq_app` role (RLS-enforced);
-# migrations connect as the `falaq_owner` superuser (DDL).
+# Full production-style stack for the Falaq dashboard:
+#   db       — Postgres (runtime = restricted falaq_app role, RLS-enforced)
+#   migrator — one-shot: applies drizzle migrations as the falaq_owner role
+#   app      — the Next.js standalone server
+#
+# Config comes from a local .env in this directory (see .env.docker.example).
+# Inside the compose network services reach Postgres at db:5432 (the 5433 host
+# mapping is only for tools on your machine).
 services:
   db:
     image: postgres:18-alpine
@@ -24,6 +29,47 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  migrator:
+    build:
+      context: .
+      target: migrator
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL_MIGRATOR: postgres://falaq_owner:${OWNER_DB_PASSWORD}@db:5432/${POSTGRES_DB}
+    restart: "no"
+
+  app:
+    build:
+      context: .
+      target: runner
+    depends_on:
+      db:
+        condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
+    environment:
+      NODE_ENV: production
+      # RLS-enforced runtime connection
+      DATABASE_URL: postgres://falaq_app:${APP_DB_PASSWORD}@db:5432/${POSTGRES_DB}
+      # Better Auth connection (auth tables only)
+      DATABASE_URL_AUTH: postgres://falaq_auth:${AUTH_DB_PASSWORD}@db:5432/${POSTGRES_DB}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
+      TRUSTED_ORIGINS: ${TRUSTED_ORIGINS:-}
+      DB_POOL_MAX: ${DB_POOL_MAX:-10}
+      # Meta Marketing API (optional — blank keeps fixtures)
+      META_APP_ID: ${META_APP_ID:-}
+      META_APP_SECRET: ${META_APP_SECRET:-}
+      META_ACCESS_TOKEN: ${META_ACCESS_TOKEN:-}
+      META_AD_ACCOUNT_IDS: ${META_AD_ACCOUNT_IDS:-}
+      META_BUSINESS_ID: ${META_BUSINESS_ID:-}
+      META_API_VERSION: ${META_API_VERSION:-v23.0}
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
 
 volumes:
   falaq_pgdata:

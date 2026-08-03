@@ -21,8 +21,8 @@ export default function HeaderSearch() {
     const q = value.trim();
     router.push(
       q
-        ? `/dashboard-shell-01/kitoblar?q=${encodeURIComponent(q)}`
-        : "/dashboard-shell-01/kitoblar",
+        ? `/dashboard/kitoblar?q=${encodeURIComponent(q)}`
+        : "/dashboard/kitoblar",
     );
   }
 

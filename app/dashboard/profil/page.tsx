@@ -98,7 +98,7 @@ export default async function Page() {
                 className="gap-2"
                 nativeButton={false}
                 render={
-                  <Link href="/dashboard-shell-01/sozlamalar">
+                  <Link href="/dashboard/sozlamalar">
                     <Settings className="size-4" />
                     {uz.profile.goToSettings}
                   </Link>

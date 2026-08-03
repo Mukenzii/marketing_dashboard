@@ -38,7 +38,7 @@ export async function listAlerts(): Promise<Alert[]> {
           NULLIF((SELECT MAX(reach) FROM insights_daily r
                   WHERE r.campaign_id=c.id AND r.entity_type='campaign'),0) AS freq
         FROM campaigns c
-        LEFT JOIN insights_daily i ON i.campaign_id=c.id AND i.entity_type='ad'
+        LEFT JOIN insights_daily i ON i.campaign_id=c.id AND i.entity_type='campaign'
         GROUP BY c.id
       ) x WHERE x.freq > 4
     `)) as unknown as Array<{ c: number }>;
@@ -58,7 +58,7 @@ export async function listAlerts(): Promise<Alert[]> {
           (COALESCE(ad.s,0)+COALESCE(m.a,0)) / NULLIF(b.budget_allocated,0) AS r
         FROM books b
         LEFT JOIN (SELECT c.book_id, SUM(i.spend*i.fx_rate) s FROM campaigns c
-                   JOIN insights_daily i ON i.campaign_id=c.id AND i.entity_type='ad'
+                   JOIN insights_daily i ON i.campaign_id=c.id AND i.entity_type='campaign'
                    GROUP BY c.book_id) ad ON ad.book_id=b.id
         LEFT JOIN (SELECT book_id, SUM(amount*fx_rate) a FROM spend_entries GROUP BY book_id) m
                    ON m.book_id=b.id

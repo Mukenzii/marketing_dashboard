@@ -7,9 +7,19 @@ import { eq } from "drizzle-orm";
 import { authDb as db } from "./db/auth-client";
 import { users, sessions, accounts, verifications } from "./db/schema";
 
+const isProd = process.env.NODE_ENV === "production";
+
+// Origins allowed to drive auth (CSRF defense). Add your production URL here.
+const trustedOrigins = [
+  process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
+  ...(process.env.TRUSTED_ORIGINS?.split(",").map((s) => s.trim()).filter(Boolean) ??
+    []),
+];
+
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL,
   secret: process.env.BETTER_AUTH_SECRET,
+  trustedOrigins,
 
   database: drizzleAdapter(db, {
     provider: "pg",
@@ -38,6 +48,32 @@ export const auth = betterAuth({
   session: {
     expiresIn: 60 * 60 * 24 * 30, // 30 days
     updateAge: 60 * 60 * 24, // slide the 30d window at most once/day
+    // Cache the validated session in a short-lived signed cookie so most
+    // requests skip the session DB lookup entirely. A revoked/expired session
+    // stops being honored within this window (60s). Independent of the user-row
+    // freshness check in getCurrentUser (see lib/dal/context.ts).
+    cookieCache: {
+      enabled: true,
+      maxAge: 60,
+    },
+  },
+
+  // Throttle auth endpoints against brute-force / credential-stuffing. The
+  // global bucket covers all routes; sign-in and password reset are stricter.
+  rateLimit: {
+    enabled: true,
+    window: 60,
+    max: 100,
+    customRules: {
+      "/sign-in/email": { window: 60, max: 5 },
+      "/forget-password": { window: 60, max: 3 },
+      "/reset-password": { window: 60, max: 5 },
+    },
+  },
+
+  advanced: {
+    // Secure cookies in production (HTTPS only).
+    useSecureCookies: isProd,
   },
 
   // role/status/lastLoginAt live on our users table; expose them to Better Auth

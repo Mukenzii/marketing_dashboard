@@ -16,7 +16,22 @@ if (!connectionString) {
   throw new Error("DATABASE_URL is not set");
 }
 
-const client = postgres(connectionString, { prepare: false });
+// Cache the pool on globalThis so Next.js HMR (dev) and repeated module
+// evaluation (prod) reuse ONE pool instead of leaking a fresh one — which would
+// exhaust Postgres connections.
+const g = globalThis as unknown as {
+  __falaqAppClient?: ReturnType<typeof postgres>;
+};
+const client =
+  g.__falaqAppClient ??
+  postgres(connectionString, {
+    prepare: false, // required: keeps each tx on one pinned conn for SET LOCAL
+    max: Number(process.env.DB_POOL_MAX ?? 10),
+    idle_timeout: 20, // release idle connections after 20s
+    connect_timeout: 10, // fail fast when the DB is unreachable
+    max_lifetime: 60 * 30, // recycle a connection after 30 min
+  });
+g.__falaqAppClient = client;
 
 export const db = drizzle(client, { schema });
 export { schema };

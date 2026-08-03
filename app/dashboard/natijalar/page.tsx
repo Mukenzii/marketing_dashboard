@@ -1,8 +1,10 @@
 import AppSidebar from "@/components/shadcn-space/blocks/dashboard-shell-01/app-sidebar";
 import ResultsView from "@/components/shadcn-space/blocks/dashboard-shell-01/pages/results-view";
 import { listCampaigns } from "@/lib/dal/campaigns";
+import { requireDashboardAccess } from "@/lib/dal/context";
 
 export default async function Page() {
+  await requireDashboardAccess();
   const campaigns = await listCampaigns();
   return (
     <AppSidebar>

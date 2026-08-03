@@ -190,6 +190,19 @@ export const uz = {
     confirmDelete: "Bu chegara o'chirilsinmi?",
     colActions: "Amallar",
     allBrands: "Barcha brendlar",
+    // Meta sync card
+    metaTitle: "Meta reklama ma'lumotlari",
+    metaSubtitle: "Facebook/Meta'dan jonli reklama ko'rsatkichlarini yangilash",
+    metaSyncNow: "Hozir sinxronlash",
+    metaSyncing: "Sinxronlanmoqda…",
+    metaLastSync: "Oxirgi sinxronlash",
+    metaNever: "Hali sinxronlanmagan",
+    metaRows: "yozuv",
+    metaRange: "davr",
+    metaStatusSuccess: "Muvaffaqiyatli",
+    metaStatusFailed: "Xatolik",
+    metaStatusRunning: "Bajarilmoqda",
+    metaDone: "Ma'lumotlar yangilandi",
   },
 
   tasks: {
@@ -221,6 +234,19 @@ export const uz = {
     create: "Yaratish",
     creating: "Yaratilmoqda…",
     cancel: "Bekor qilish",
+    // detail + comments
+    detailTitle: "Vazifa tafsilotlari",
+    descriptionLabel: "Tavsif",
+    noDescription: "Tavsif yo'q",
+    assigneeLabel: "Mas'ul",
+    creatorLabel: "Yaratdi",
+    dueLabel: "Muddati",
+    comments: "Izohlar",
+    noComments: "Hali izohlar yo'q",
+    commentPlaceholder: "Izoh yozing…",
+    send: "Yuborish",
+    sending: "Yuborilmoqda…",
+    you: "Siz",
     status: {
       todo: "Bajarilishi kerak",
       in_progress: "Jarayonda",
@@ -326,6 +352,25 @@ export const uz = {
     searchFor: "Qidiruv natijalari:",
     empty: "Sizda hali kitoblar yo'q",
     emptyBody: "Kitoblar qo'shilgach, ular shu yerda ko'rinadi.",
+    // self-service create
+    add: "＋ Kitob qo'shish",
+    createTitle: "Yangi kitob qo'shish",
+    createDesc: "Kitob ma'lumotlarini kiriting — jadval formatiga mos.",
+    fTitle: "Kitob nomi",
+    fBrand: "Brend",
+    fCategory: "Kategoriya",
+    fPrintRun: "Nashr soni",
+    fSalesPrev: "O'tgan oy sotuvi",
+    fSalesNow: "Shu oy sotuvi",
+    fBudget: "Byudjet",
+    fTargetBudget: "Target byudjeti",
+    fTargetOther: "Target boshqa kitobga",
+    fTargetSales: "Target (sotuv)",
+    fLaunch: "Ishga tushirilgan sana",
+    optional: "ixtiyoriy",
+    create: "Qo'shish",
+    creating: "Qo'shilmoqda…",
+    cancel: "Bekor qilish",
   },
 
   bookDetail: {
@@ -377,6 +422,37 @@ export const uz = {
     title: "Kitoblar bo'yicha sarf",
     viewBudgets: "Byudjetlarda ko'rish",
   },
+
+  notify: {
+    taskAssignedTitle: "Yangi vazifa biriktirildi",
+    taskAssignedBy: "Sizga vazifa berdi",
+    commentTitle: "Vazifaga yangi izoh",
+    syncTitle: "Ma'lumotlar yangilandi",
+    syncBody: "Meta bilan sinxronizatsiya muvaffaqiyatli",
+    fatigueTitle: "Kreativ charchoq",
+    budgetTitle: "Byudjet tugayapti",
+  },
+
+  dailyMetrics: {
+    title: "Kunlik ko'rsatkichlar",
+    subtitle: "Kitob kampaniyalari — oxirgi 30 kun, har bir kun uchun",
+    overall: "Umumiy",
+    main: "Asosiy ko'rsatkichlar",
+    extra: "Qo'shimcha ko'rsatkichlar",
+    impressions: "Ko'rsatishlar",
+    spend: "Sarflandi",
+    reach: "Qamrov",
+    frequency: "Chastota",
+    cpm: "CPM (1000 ko'rsatish)",
+    ctr: "CTR",
+    hook: "HOOK rate",
+    hold: "HOLD rate",
+    delivery: "Yetkazish",
+    noData: "Bu kitob uchun Meta ma'lumotlari hali yo'q. Kampaniyalar biriktirilib, sinxronlangandan so'ng ko'rinadi.",
+    ok: "OK",
+    warn: "Ogohlantirish",
+    alert: "Xavf",
+  },
   topCampaigns: {
     title: "Eng ko'p sarflagan kampaniyalar",
     subtitle: "Kampaniyalar bo'yicha statistika",
@@ -398,6 +474,7 @@ export const uz = {
   notifications: {
     title: "Bildirishnomalar",
     seeAll: "Barchasini ko'rish",
+    markAllRead: "Hammasini o'qildi deb belgilash",
     empty: "Yangi bildirishnoma yo'q",
   },
   alerts: {
@@ -435,6 +512,50 @@ export const uz = {
     appSettings: "Tizim sozlamalari",
     goToSettings: "Sozlamalarga o'tish",
   },
+
+  tracker: {
+    title: "Ko'rsatkichlar",
+    edit: "Tahrirlash",
+    save: "Saqlash",
+    cancel: "Bekor qilish",
+    auto: "avto",
+    category: "Kategoriya",
+    categoryAuto: "Avto (sotuvga qarab)",
+    catNew: "Yangi",
+    printRun: "Nashr soni",
+    stock: "Qoldiq (astatka)",
+    sales: "Sotuv",
+    salesPrev: "O'tgan oy sotuvi",
+    salesNow: "Shu oy sotuvi",
+    diff: "Farq",
+    marketingBudget: "Byudjet",
+    target: "Target (sotuv)",
+    targetBudget: "Target byudjeti",
+    targetOther: "Target boshqa kitobga",
+    totalUsed: "Umumiy ishlatilgan byudjet",
+    bloggers: "Blogerlar",
+    percent: "Foiz",
+  },
+
+  bloggers: {
+    title: "Bloggerlar",
+    add: "＋ Blogger qo'shish",
+    name: "Blogger",
+    platform: "Platforma",
+    budget: "Byudjet",
+    spent: "Sarflandi",
+    remaining: "Qoldiq",
+    note: "Izoh",
+    actions: "Amallar",
+    save: "Saqlash",
+    cancel: "Bekor qilish",
+    edit: "Tahrirlash",
+    delete: "O'chirish",
+    confirmDelete: "Bu blogger o'chirilsinmi?",
+    empty: "Hali bloggerlar qo'shilmagan",
+    totalBudget: "Umumiy byudjet",
+    totalSpent: "Jami sarflandi",
+  },
 } as const;
 
 // Deterministic grouping (space every 3 digits). NOT locale `Intl` — that
@@ -467,4 +588,24 @@ export function fmtDate(d: Date | string | null | undefined): string {
   const dd = String(date.getUTCDate()).padStart(2, "0");
   const mm = String(date.getUTCMonth() + 1).padStart(2, "0");
   return `${dd}.${mm}.${date.getUTCFullYear()}`;
+}
+
+/**
+ * Relative time in Uzbek ("5 daqiqa oldin"). CLIENT-ONLY — uses the current
+ * clock, so never call it during server render (hydration). Falls back to an
+ * absolute date for anything older than a week.
+ */
+export function relTime(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return "—";
+  const sec = Math.floor((Date.now() - then) / 1000);
+  if (sec < 45) return "hozirgina";
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min} daqiqa oldin`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr} soat oldin`;
+  const day = Math.floor(hr / 24);
+  if (day < 7) return `${day} kun oldin`;
+  return fmtDate(iso);
 }

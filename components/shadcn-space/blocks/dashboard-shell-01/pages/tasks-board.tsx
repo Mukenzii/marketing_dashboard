@@ -44,13 +44,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { uz, fmtDate } from "@/lib/i18n/uz";
-import type { TaskRow } from "@/lib/dal/tasks";
+import { uz, fmtDate, relTime } from "@/lib/i18n/uz";
+import type { TaskRow, TaskComment } from "@/lib/dal/tasks";
 import type { ActionResult } from "@/lib/actions/util";
 import {
   createTaskAction,
   updateTaskStatusAction,
+  listCommentsAction,
+  addCommentAction,
 } from "@/lib/actions/tasks";
+import { MessageSquare, Send } from "lucide-react";
 
 type Status = TaskRow["status"];
 type Priority = TaskRow["priority"];
@@ -187,39 +190,52 @@ function StatusControl({ task }: { task: TaskRow }) {
   );
 }
 
-function TaskCard({ task }: { task: TaskRow }) {
+function TaskCard({
+  task,
+  onOpen,
+}: {
+  task: TaskRow;
+  onOpen: (t: TaskRow) => void;
+}) {
   return (
-    <Card className="p-0 gap-0 rounded-xl shadow-xs">
+    <Card className="p-0 gap-0 rounded-xl shadow-xs transition-colors hover:border-blue-500/40">
       <CardContent className="p-4 flex flex-col gap-3">
-        <h6 className="text-sm font-medium leading-snug text-foreground">
-          {task.title}
-        </h6>
+        {/* clickable area → opens detail; StatusControl below stays separate */}
+        <button
+          type="button"
+          onClick={() => onOpen(task)}
+          className="flex flex-col gap-3 text-left cursor-pointer"
+        >
+          <h6 className="text-sm font-medium leading-snug text-foreground">
+            {task.title}
+          </h6>
 
-        <div className="flex flex-wrap items-center gap-1.5">
-          <Badge className="bg-muted text-muted-foreground font-normal gap-1">
-            <BookOpen className="size-3" />
-            {task.bookTitle ?? uz.tasks.noBook}
-          </Badge>
-          <PriorityChip priority={task.priority} />
-          {task.isOverdue && (
-            <Badge className="bg-rose-500/10 text-rose-500 font-normal">
-              {uz.common.overdue}
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Badge className="bg-muted text-muted-foreground font-normal gap-1">
+              <BookOpen className="size-3" />
+              {task.bookTitle ?? uz.tasks.noBook}
             </Badge>
-          )}
-        </div>
-
-        <div className="flex items-center justify-between gap-2 pt-1">
-          <AssigneeCell name={task.assigneeName} />
-          <span
-            className={cn(
-              "flex items-center gap-1 text-xs",
-              task.isOverdue ? "text-rose-500" : "text-muted-foreground",
+            <PriorityChip priority={task.priority} />
+            {task.isOverdue && (
+              <Badge className="bg-rose-500/10 text-rose-500 font-normal">
+                {uz.common.overdue}
+              </Badge>
             )}
-          >
-            <CalendarDays className="size-3" />
-            {task.dueDate ? fmtDate(task.dueDate) : uz.tasks.noDue}
-          </span>
-        </div>
+          </div>
+
+          <div className="flex items-center justify-between gap-2 pt-1">
+            <AssigneeCell name={task.assigneeName} />
+            <span
+              className={cn(
+                "flex items-center gap-1 text-xs",
+                task.isOverdue ? "text-rose-500" : "text-muted-foreground",
+              )}
+            >
+              <CalendarDays className="size-3" />
+              {task.dueDate ? fmtDate(task.dueDate) : uz.tasks.noDue}
+            </span>
+          </div>
+        </button>
 
         <div className="pt-1">
           <StatusControl task={task} />
@@ -229,7 +245,221 @@ function TaskCard({ task }: { task: TaskRow }) {
   );
 }
 
-function KanbanView({ tasks }: { tasks: TaskRow[] }) {
+function initialsOf(name: string | null): string {
+  return initials(name);
+}
+
+/** Slide-over showing full task details + a threaded comment section. */
+function TaskDetailSheet({
+  task,
+  onClose,
+}: {
+  task: TaskRow | null;
+  onClose: () => void;
+}) {
+  const router = useRouter();
+  const [comments, setComments] = useState<TaskComment[]>([]);
+  const [loading, startLoad] = useTransition();
+  const [sending, startSend] = useTransition();
+  const [draft, setDraft] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!task) return;
+    setComments([]);
+    setDraft("");
+    setError(null);
+    startLoad(async () => {
+      const res = await listCommentsAction(task.id);
+      if (res.ok && res.comments) setComments(res.comments);
+    });
+  }, [task]);
+
+  function send() {
+    if (!task || !draft.trim()) return;
+    setError(null);
+    startSend(async () => {
+      const res = await addCommentAction(task.id, draft);
+      if (!res.ok) {
+        setError(res.error ?? uz.tasks.send);
+        return;
+      }
+      setDraft("");
+      const refreshed = await listCommentsAction(task.id);
+      if (refreshed.ok && refreshed.comments) setComments(refreshed.comments);
+      router.refresh();
+    });
+  }
+
+  return (
+    <Sheet open={!!task} onOpenChange={(o) => !o && onClose()}>
+      <SheetContent side="right" className="w-full sm:max-w-md">
+        {task && (
+          <>
+            <SheetHeader>
+              <SheetTitle className="leading-snug">{task.title}</SheetTitle>
+              <SheetDescription>{uz.tasks.detailTitle}</SheetDescription>
+            </SheetHeader>
+
+            <div className="flex min-h-0 flex-1 flex-col">
+              <div className="flex flex-col gap-4 overflow-y-auto px-4 pb-4">
+                {/* meta */}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <Badge className="bg-muted text-muted-foreground font-normal gap-1">
+                    <BookOpen className="size-3" />
+                    {task.bookTitle ?? uz.tasks.noBook}
+                  </Badge>
+                  <PriorityChip priority={task.priority} />
+                  <Badge className={cn("font-normal", STATUS_ACCENT[task.status])}>
+                    {uz.tasks.status[task.status]}
+                  </Badge>
+                  {task.isOverdue && (
+                    <Badge className="bg-rose-500/10 text-rose-500 font-normal">
+                      {uz.common.overdue}
+                    </Badge>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-xs text-muted-foreground">
+                      {uz.tasks.assigneeLabel}
+                    </span>
+                    <span className="text-foreground">
+                      {task.assigneeName ?? uz.tasks.unassigned}
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-xs text-muted-foreground">
+                      {uz.tasks.dueLabel}
+                    </span>
+                    <span
+                      className={cn(
+                        task.isOverdue ? "text-rose-500" : "text-foreground",
+                      )}
+                    >
+                      {task.dueDate ? fmtDate(task.dueDate) : uz.tasks.noDue}
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-xs text-muted-foreground">
+                      {uz.tasks.creatorLabel}
+                    </span>
+                    <span className="text-foreground">
+                      {task.creatorName ?? "—"}
+                      {task.createdAt && (
+                        <span className="text-muted-foreground">
+                          {" · "}
+                          {relTime(task.createdAt)}
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs text-muted-foreground">
+                    {uz.tasks.descriptionLabel}
+                  </span>
+                  <p className="whitespace-pre-wrap text-sm text-foreground">
+                    {task.description || (
+                      <span className="text-muted-foreground">
+                        {uz.tasks.noDescription}
+                      </span>
+                    )}
+                  </p>
+                </div>
+
+                {/* comments */}
+                <div className="flex items-center gap-2 border-t pt-4">
+                  <MessageSquare className="size-4 text-muted-foreground" />
+                  <span className="text-sm font-medium text-foreground">
+                    {uz.tasks.comments}
+                  </span>
+                  <Badge className="bg-muted text-muted-foreground font-normal">
+                    {comments.length}
+                  </Badge>
+                </div>
+
+                <div className="flex flex-col gap-3">
+                  {loading ? (
+                    <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                  ) : comments.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      {uz.tasks.noComments}
+                    </p>
+                  ) : (
+                    comments.map((c) => (
+                      <div key={c.id} className="flex gap-2.5">
+                        <Avatar size="sm">
+                          <AvatarFallback>
+                            {initialsOf(c.authorName)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex min-w-0 flex-col gap-0.5">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-medium text-foreground">
+                              {c.isMine ? uz.tasks.you : c.authorName ?? "—"}
+                            </span>
+                            <span className="text-[11px] text-muted-foreground">
+                              {relTime(c.createdAt)}
+                            </span>
+                          </div>
+                          <p className="whitespace-pre-wrap text-sm text-foreground">
+                            {c.body}
+                          </p>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <SheetFooter className="border-t">
+                <div className="flex flex-col gap-2">
+                  {error && <p className="text-xs text-rose-500">{error}</p>}
+                  <div className="flex items-end gap-2">
+                    <Textarea
+                      value={draft}
+                      onChange={(e) => setDraft(e.target.value)}
+                      placeholder={uz.tasks.commentPlaceholder}
+                      rows={2}
+                      className="min-h-9 flex-1"
+                      onKeyDown={(e) => {
+                        if ((e.metaKey || e.ctrlKey) && e.key === "Enter") send();
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      onClick={send}
+                      disabled={sending || !draft.trim()}
+                      className="gap-1.5"
+                    >
+                      {sending ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <Send className="size-4" />
+                      )}
+                      {sending ? uz.tasks.sending : uz.tasks.send}
+                    </Button>
+                  </div>
+                </div>
+              </SheetFooter>
+            </div>
+          </>
+        )}
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function KanbanView({
+  tasks,
+  onOpen,
+}: {
+  tasks: TaskRow[];
+  onOpen: (t: TaskRow) => void;
+}) {
   return (
     <div className="overflow-x-auto pb-2">
       <div className="flex gap-4 min-w-max">
@@ -259,7 +489,9 @@ function KanbanView({ tasks }: { tasks: TaskRow[] }) {
                     —
                   </p>
                 ) : (
-                  items.map((t) => <TaskCard key={t.id} task={t} />)
+                  items.map((t) => (
+                    <TaskCard key={t.id} task={t} onOpen={onOpen} />
+                  ))
                 )}
               </div>
             </div>
@@ -270,7 +502,13 @@ function KanbanView({ tasks }: { tasks: TaskRow[] }) {
   );
 }
 
-function TableView({ tasks }: { tasks: TaskRow[] }) {
+function TableView({
+  tasks,
+  onOpen,
+}: {
+  tasks: TaskRow[];
+  onOpen: (t: TaskRow) => void;
+}) {
   return (
     <Card className="w-full pb-0 pt-6 gap-6">
       <CardContent className="px-0">
@@ -290,9 +528,13 @@ function TableView({ tasks }: { tasks: TaskRow[] }) {
               {tasks.map((task) => (
                 <TableRow key={task.id}>
                   <TableCell className="whitespace-nowrap p-3 ps-6">
-                    <span className="text-sm font-medium text-foreground">
+                    <button
+                      type="button"
+                      onClick={() => onOpen(task)}
+                      className="text-sm font-medium text-foreground hover:text-blue-600 hover:underline cursor-pointer"
+                    >
                       {task.title}
-                    </span>
+                    </button>
                   </TableCell>
                   <TableCell className="whitespace-nowrap">
                     <span className="text-sm text-muted-foreground">
@@ -499,6 +741,7 @@ export default function TasksBoard({
   isPrivileged,
 }: BoardProps) {
   const [view, setView] = useState<"kanban" | "table">("kanban");
+  const [detail, setDetail] = useState<TaskRow | null>(null);
 
   return (
     <div className="flex flex-col gap-6">
@@ -549,10 +792,12 @@ export default function TasksBoard({
       {tasks.length === 0 ? (
         <EmptyState />
       ) : view === "kanban" ? (
-        <KanbanView tasks={tasks} />
+        <KanbanView tasks={tasks} onOpen={setDetail} />
       ) : (
-        <TableView tasks={tasks} />
+        <TableView tasks={tasks} onOpen={setDetail} />
       )}
+
+      <TaskDetailSheet task={detail} onClose={() => setDetail(null)} />
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createSpend, updateSpend, deleteSpend } from "@/lib/dal/spend";
 import { errMsg, type ActionResult } from "./util";
 
-const BASE = "/dashboard-shell-01";
+const BASE = "/dashboard";
 
 export async function createSpendAction(
   _prev: ActionResult,

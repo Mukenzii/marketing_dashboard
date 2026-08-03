@@ -3,7 +3,11 @@ import "server-only";
 import { z } from "zod";
 import { and, eq, sql } from "drizzle-orm";
 import { withUser } from "./with-user";
-import { requireCeoOrThrow } from "./context";
+import {
+  requireCeoOrThrow,
+  requireCeoOnlyOrThrow,
+  invalidateUser,
+} from "./context";
 import { ForbiddenError, NotFoundError } from "./errors";
 import { authDb } from "@/lib/db/auth-client";
 import { auth } from "@/lib/auth";
@@ -111,6 +115,40 @@ export async function listThresholds(): Promise<ThresholdRow[]> {
       alertBelow: r.alert_below == null ? null : Number(r.alert_below),
       alertAbove: r.alert_above == null ? null : Number(r.alert_above),
     }));
+  });
+}
+
+export type SyncRunRow = {
+  status: string;
+  startedAt: string;
+  finishedAt: string | null;
+  rowsUpserted: number;
+  dateFrom: string | null;
+  dateTo: string | null;
+  error: string | null;
+};
+
+/** Most recent Meta sync run (for the Sozlamalar status card). CEO only. */
+export async function latestSyncRun(): Promise<SyncRunRow | null> {
+  await requireCeoOrThrow();
+  return withUser(async (tx) => {
+    const rows = (await tx.execute(sql`
+      SELECT status, started_at, finished_at, rows_upserted, date_from, date_to, error
+      FROM sync_runs ORDER BY started_at DESC LIMIT 1
+    `)) as unknown as Array<Record<string, unknown>>;
+    if (!rows.length) return null;
+    const r = rows[0];
+    return {
+      status: String(r.status),
+      startedAt: new Date(r.started_at as string).toISOString(),
+      finishedAt: r.finished_at
+        ? new Date(r.finished_at as string).toISOString()
+        : null,
+      rowsUpserted: Number(r.rows_upserted) || 0,
+      dateFrom: (r.date_from as string) ?? null,
+      dateTo: (r.date_to as string) ?? null,
+      error: (r.error as string) ?? null,
+    };
   });
 }
 
@@ -282,7 +320,7 @@ export async function changeRole(
 ): Promise<void> {
   z.string().min(1).parse(userId);
   z.string().min(1).parse(role);
-  const ceo = await requireCeoOrThrow();
+  const ceo = await requireCeoOnlyOrThrow();
 
   if (userId === ceo.id)
     throw new ForbiddenError("O'z rolingizni o'zgartira olmaysiz");
@@ -317,6 +355,7 @@ export async function changeRole(
       newValue: { role },
     });
   });
+  invalidateUser(userId); // reflect the new role on their very next request
 }
 
 export async function setUserStatus(
@@ -324,7 +363,7 @@ export async function setUserStatus(
   status: "active" | "inactive",
 ): Promise<void> {
   z.enum(["active", "inactive"]).parse(status);
-  const ceo = await requireCeoOrThrow();
+  const ceo = await requireCeoOnlyOrThrow();
 
   if (status === "inactive") {
     if (userId === ceo.id)
@@ -353,13 +392,14 @@ export async function setUserStatus(
       newValue: { status },
     });
   });
+  invalidateUser(userId); // deactivation/reactivation takes effect immediately
 }
 
 export async function reassignBooks(
   fromUserId: string,
   toUserId: string | null,
 ): Promise<void> {
-  const ceo = await requireCeoOrThrow();
+  const ceo = await requireCeoOnlyOrThrow();
   await withUser(async (tx) => {
     const res = await tx
       .update(books)
@@ -386,7 +426,7 @@ export async function inviteUser(
   input: InviteInput,
 ): Promise<{ id: string }> {
   const data = Invite.parse(input);
-  const ceo = await requireCeoOrThrow();
+  const ceo = await requireCeoOnlyOrThrow();
 
   const existing = await authDb
     .select({ id: users.id })

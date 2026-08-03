@@ -1,10 +1,10 @@
 import AppSidebar from "@/components/shadcn-space/blocks/dashboard-shell-01/app-sidebar";
 import UsersView from "@/components/shadcn-space/blocks/dashboard-shell-01/pages/users";
 import { listRoles, listUsers } from "@/lib/dal/admin";
-import { getCurrentUser, requireCeo } from "@/lib/dal/context";
+import { getCurrentUser, requireCeoOnly } from "@/lib/dal/context";
 
 export default async function Page() {
-  await requireCeo();
+  await requireCeoOnly();
   const [users, roles, current] = await Promise.all([
     listUsers(),
     listRoles(),

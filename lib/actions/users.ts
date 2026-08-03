@@ -9,7 +9,7 @@ import {
 } from "@/lib/dal/admin";
 import { errMsg, type ActionResult } from "./util";
 
-const BASE = "/dashboard-shell-01";
+const BASE = "/dashboard";
 
 export async function changeRoleAction(
   userId: string,

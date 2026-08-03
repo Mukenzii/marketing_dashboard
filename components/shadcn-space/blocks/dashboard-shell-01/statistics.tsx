@@ -161,7 +161,7 @@ const StatisticsBlock = ({
                   }
                   nativeButton={false}
                   render={
-                    <Link href={stat.href ?? "/dashboard-shell-01/natijalar"} />
+                    <Link href={stat.href ?? "/dashboard/natijalar"} />
                   }
                 >
                   <span>{uz.panel.seeReport}</span>

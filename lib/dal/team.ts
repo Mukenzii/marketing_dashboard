@@ -33,7 +33,7 @@ export async function listManagerSummaries(): Promise<ManagerSummary[]> {
         FROM books b
         LEFT JOIN campaigns c ON c.book_id = b.id
         LEFT JOIN insights_daily i
-          ON i.campaign_id = c.id AND i.entity_type = 'ad'
+          ON i.campaign_id = c.id AND i.entity_type = 'campaign'
         GROUP BY b.id
       ),
       man AS (

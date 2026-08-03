@@ -13,7 +13,7 @@ import { Loader2 } from "lucide-react";
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") || "/dashboard-shell-01";
+  const next = searchParams.get("next") || "/dashboard";
 
   // Real session check (hits /api/auth/get-session). Only a genuinely valid
   // session redirects into the app — a stale cookie resolves to null here, so
@@ -55,7 +55,7 @@ function LoginForm() {
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="you@falaqnashr.com"
+          placeholder="you@falaqnashr.uz"
         />
       </div>
       <div className="flex flex-col gap-2">

@@ -16,6 +16,7 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -121,9 +122,11 @@ function UserRowActions({
         <DropdownMenuContent align="end">
           {isSelf && (
             <>
-              <DropdownMenuLabel className="text-muted-foreground">
-                {uz.users.selfHint}
-              </DropdownMenuLabel>
+              <DropdownMenuGroup>
+                <DropdownMenuLabel className="text-muted-foreground">
+                  {uz.users.selfHint}
+                </DropdownMenuLabel>
+              </DropdownMenuGroup>
               <DropdownMenuSeparator />
             </>
           )}

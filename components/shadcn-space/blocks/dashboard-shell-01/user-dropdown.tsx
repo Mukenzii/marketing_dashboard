@@ -71,14 +71,14 @@ const UserDropdown = ({ user, trigger, defaultOpen, align = "end" }: Props) => {
           <DropdownMenuGroup>
             <DropdownMenuItem
               className={itemClass}
-              render={<Link href="/dashboard-shell-01/profil" />}
+              render={<Link href="/dashboard/profil" />}
             >
               <CircleUserRound size={20} />
               <span>{uz.userMenu.profile}</span>
             </DropdownMenuItem>
             <DropdownMenuItem
               className={itemClass}
-              render={<Link href="/dashboard-shell-01/profil" />}
+              render={<Link href="/dashboard/profil" />}
             >
               <Settings size={20} />
               <span>{uz.userMenu.settings}</span>

@@ -1,7 +1,7 @@
 import React from "react";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/dal/context";
-import { listAlerts } from "@/lib/dal/alerts";
+import { listNotifications } from "@/lib/dal/notifications";
 import { getNavForRole } from "@/lib/nav";
 import { DashboardShell } from "@/components/shadcn-space/blocks/dashboard-shell-01/dashboard-shell";
 
@@ -18,8 +18,8 @@ const AppSidebar = async ({ children }: { children: React.ReactNode }) => {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  const nav = getNavForRole(user.isPrivileged);
-  const alerts = await listAlerts();
+  const nav = getNavForRole(user.role);
+  const alerts = await listNotifications();
 
   return (
     <DashboardShell

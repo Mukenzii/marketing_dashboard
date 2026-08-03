@@ -17,14 +17,42 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { uz, fmtUZS, fmtDate } from "@/lib/i18n/uz";
+import { uz, fmtUZS, fmtDate, fmtNumber } from "@/lib/i18n/uz";
 import type { BookRow } from "@/lib/dal/books";
+import BookCreateSheet from "./book-create-sheet";
+
+/** Total spent per the tracker sheet: Target byudjeti + Target boshqa kitobga + Blogerlar. */
+function trackerUsed(b: BookRow): number {
+  return (b.targetBudget ?? 0) + (b.targetOtherBook ?? 0) + b.bloggerUZS;
+}
+/** Astatka: allocated budget − tracker-used. */
+function trackerLeft(b: BookRow): number {
+  return b.budgetUZS - trackerUsed(b);
+}
+/** Foiz: tracker-used as a share of the allocated budget. */
+function trackerPct(b: BookRow): number | null {
+  return b.budgetUZS > 0 ? (trackerUsed(b) / b.budgetUZS) * 100 : null;
+}
+/** Farq: current-month sales − previous-month sales (null unless both known). */
+function salesDiff(b: BookRow): number | null {
+  if (b.salesCount == null || b.salesPrevMonth == null) return null;
+  return b.salesCount - b.salesPrevMonth;
+}
 
 /** Brand chip: falaq_nashr → info (blue), falaq_kids → violet. */
 function brandChip(brand: BookRow["brand"]): { label: string; cls: string } {
   if (brand === "falaq_kids")
     return { label: uz.brands.falaq_kids, cls: "bg-violet-500/10 text-violet-600" };
   return { label: uz.brands.falaq_nashr, cls: "bg-blue-500/10 text-blue-600" };
+}
+
+/** Category → colour badge (A+/A green, B amber, C red, new blue). */
+function categoryCls(c: BookRow["category"]): string {
+  if (c === "A+" || c === "A") return "bg-teal-400/10 text-teal-600";
+  if (c === "B") return "bg-orange-400/10 text-orange-600";
+  if (c === "C") return "bg-rose-500/10 text-rose-500";
+  if (c === "new") return "bg-blue-500/10 text-blue-600";
+  return "bg-muted text-muted-foreground";
 }
 
 /** Burn% → badge + progress-bar colour (<80 teal, 80–100 amber, >100 red).
@@ -63,7 +91,7 @@ function BookCard({ b }: { b: BookRow }) {
 
   return (
     <Link
-      href={`/dashboard-shell-01/kitoblar/${b.id}`}
+      href={`/dashboard/kitoblar/${b.id}`}
       className="block rounded-2xl transition-colors hover:bg-muted/30"
     >
     <Card className="ring-0 border rounded-2xl py-6">
@@ -159,15 +187,18 @@ export default function BooksView({
   return (
     <>
       {/* Page header */}
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-medium text-card-foreground">
-          {uz.nav.books}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {query
-            ? `${uz.books.searchFor} "${query}" — ${books.length}`
-            : uz.books.subtitle}
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-medium text-card-foreground">
+            {uz.nav.books}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {query
+              ? `${uz.books.searchFor} "${query}" — ${books.length}`
+              : uz.books.subtitle}
+          </p>
+        </div>
+        <BookCreateSheet />
       </div>
 
       {books.length === 0 ? (
@@ -198,28 +229,32 @@ export default function BooksView({
             </CardHeader>
             <CardContent className="px-0">
               <div className="overflow-x-auto">
-                <Table className="min-w-2xl">
+                <Table className="min-w-[1100px]">
                   <TableHeader>
                     <TableRow className="hover:bg-transparent!">
                       <TableHead className="p-3 ps-6">#</TableHead>
                       <TableHead className="p-2">{uz.budgets.colBook}</TableHead>
-                      <TableHead className="p-2">
-                        {uz.budgets.colBudget}
-                      </TableHead>
-                      <TableHead className="p-2">{uz.budgets.colOwner}</TableHead>
-                      <TableHead className="p-2">{uz.budgets.colSpent}</TableHead>
-                      <TableHead className="p-2 min-w-40">
-                        {uz.books.colProgress}
-                      </TableHead>
-                      <TableHead className="p-3 pe-6 text-right">
-                        {uz.budgets.colRemaining}
-                      </TableHead>
+                      <TableHead className="p-2">{uz.tracker.category}</TableHead>
+                      <TableHead className="p-2 text-right">{uz.tracker.printRun}</TableHead>
+                      <TableHead className="p-2 text-right">{uz.tracker.salesPrev}</TableHead>
+                      <TableHead className="p-2 text-right">{uz.tracker.salesNow}</TableHead>
+                      <TableHead className="p-2 text-right">{uz.tracker.diff}</TableHead>
+                      <TableHead className="p-2 text-right">{uz.tracker.marketingBudget}</TableHead>
+                      <TableHead className="p-2 text-right">{uz.tracker.targetBudget}</TableHead>
+                      <TableHead className="p-2 text-right">{uz.tracker.targetOther}</TableHead>
+                      <TableHead className="p-2 text-right">{uz.tracker.bloggers}</TableHead>
+                      <TableHead className="p-2 text-right">{uz.tracker.totalUsed}</TableHead>
+                      <TableHead className="p-2 text-right">{uz.tracker.stock}</TableHead>
+                      <TableHead className="p-3 pe-6 text-right">{uz.tracker.percent}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody className="divide-y divide-border">
                     {books.map((b, index) => {
                       const chip = brandChip(b.brand);
-                      const burn = burnStyle(b.burnPct);
+                      const used = trackerUsed(b);
+                      const left = trackerLeft(b);
+                      const pct = trackerPct(b);
+                      const diff = salesDiff(b);
                       return (
                         <TableRow key={b.id}>
                           <TableCell className="whitespace-nowrap p-3 ps-6 text-sm text-muted-foreground">
@@ -228,7 +263,7 @@ export default function BooksView({
                           <TableCell className="whitespace-nowrap p-2">
                             <div className="flex items-center gap-2">
                               <Link
-                                href={`/dashboard-shell-01/kitoblar/${b.id}`}
+                                href={`/dashboard/kitoblar/${b.id}`}
                                 className="text-sm font-medium text-card-foreground hover:underline"
                               >
                                 {b.title}
@@ -240,31 +275,66 @@ export default function BooksView({
                               </Badge>
                             </div>
                           </TableCell>
-                          <TableCell className="whitespace-nowrap p-2 text-sm">
+                          <TableCell className="whitespace-nowrap p-2">
+                            {b.category ? (
+                              <Badge className={cn("font-medium", categoryCls(b.category))}>
+                                {b.category}
+                              </Badge>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">
+                                {uz.common.dash}
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap p-2 text-right text-sm tabular-nums">
+                            {b.printRun == null ? uz.common.dash : fmtNumber(b.printRun)}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap p-2 text-right text-sm tabular-nums">
+                            {b.salesPrevMonth == null ? uz.common.dash : fmtNumber(b.salesPrevMonth)}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap p-2 text-right text-sm tabular-nums">
+                            {b.salesCount == null ? uz.common.dash : fmtNumber(b.salesCount)}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap p-2 text-right text-sm tabular-nums">
+                            {diff == null ? (
+                              <span className="text-muted-foreground">{uz.common.dash}</span>
+                            ) : (
+                              <span
+                                className={cn(
+                                  diff > 0 && "text-teal-600",
+                                  diff < 0 && "text-rose-500",
+                                )}
+                              >
+                                {diff > 0 ? "+" : ""}
+                                {fmtNumber(diff)}
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap p-2 text-right text-sm tabular-nums">
                             {fmtUZS(b.budgetUZS)}
                           </TableCell>
-                          <TableCell className="whitespace-nowrap p-2 text-sm">
-                            {b.ownerName ?? uz.budgets.noOwner}
+                          <TableCell className="whitespace-nowrap p-2 text-right text-sm tabular-nums">
+                            {b.targetBudget == null ? uz.common.dash : fmtUZS(b.targetBudget)}
                           </TableCell>
-                          <TableCell className="whitespace-nowrap p-2 text-sm">
-                            {fmtUZS(b.totalCostUZS)}
+                          <TableCell className="whitespace-nowrap p-2 text-right text-sm tabular-nums">
+                            {b.targetOtherBook == null ? uz.common.dash : fmtUZS(b.targetOtherBook)}
                           </TableCell>
-                          <TableCell className="whitespace-nowrap p-2">
-                            <div className="flex items-center gap-2">
-                              <Progress
-                                value={clampBurn(b.burnPct)}
-                                className={cn(
-                                  "w-full **:data-[slot=progress-track]:h-1.5",
-                                  burn.bar,
-                                )}
-                              />
-                              <span className="text-xs text-muted-foreground tabular-nums">
-                                {burnLabel(b.burnPct)}
-                              </span>
-                            </div>
+                          <TableCell className="whitespace-nowrap p-2 text-right text-sm tabular-nums">
+                            {fmtUZS(b.bloggerUZS)}
                           </TableCell>
-                          <TableCell className="whitespace-nowrap p-3 pe-6 text-right text-sm">
-                            {fmtUZS(b.remainingUZS)}
+                          <TableCell className="whitespace-nowrap p-2 text-right text-sm font-medium tabular-nums">
+                            {fmtUZS(used)}
+                          </TableCell>
+                          <TableCell
+                            className={cn(
+                              "whitespace-nowrap p-2 text-right text-sm tabular-nums",
+                              left < 0 && "text-rose-500",
+                            )}
+                          >
+                            {fmtUZS(left)}
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap p-3 pe-6 text-right text-sm tabular-nums">
+                            {pct == null ? uz.common.dash : `${pct.toFixed(0)}%`}
                           </TableCell>
                         </TableRow>
                       );

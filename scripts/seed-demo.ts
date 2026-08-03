@@ -63,8 +63,8 @@ async function main() {
     .select({ id: s.users.id, email: s.users.email })
     .from(s.users);
   const idOf = (email: string) => users.find((u) => u.email === email)!.id;
-  const mgr = (k: number) => idOf(`manager${k}@falaqnashr.com`);
-  const ceo = idOf("ceo1@falaqnashr.com");
+  const mgr = (k: number) => idOf(`manager${k}@falaqnashr.uz`);
+  const ceo = idOf("ceo1@falaqnashr.uz");
 
   console.log("truncating domain tables…");
   await sqlc.unsafe(`

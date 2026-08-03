@@ -43,7 +43,7 @@ export async function getDashboardKpis(): Promise<DashboardKpis> {
              i.leads, i.video_3s_views, i.video_thruplay, i.purchases,
              i.purchase_value
       FROM insights_daily i
-      WHERE i.entity_type = 'ad'
+      WHERE i.entity_type = 'campaign'
     `)) as unknown as Array<Record<string, unknown>>;
 
     const agg = sumRaw(

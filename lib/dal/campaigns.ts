@@ -61,7 +61,7 @@ export async function listCampaigns(): Promise<CampaignRow[]> {
                        WHERE r.campaign_id = c.id AND r.entity_type='campaign'), 0) AS reach
       FROM campaigns c
       LEFT JOIN books b ON b.id = c.book_id
-      LEFT JOIN insights_daily i ON i.campaign_id = c.id AND i.entity_type = 'ad'
+      LEFT JOIN insights_daily i ON i.campaign_id = c.id AND i.entity_type = 'campaign'
       GROUP BY c.id, b.title
       ORDER BY spend DESC
     `)) as unknown as Array<Record<string, unknown>>;

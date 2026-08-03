@@ -5,8 +5,10 @@ import { eq, sql } from "drizzle-orm";
 import { withUser } from "./with-user";
 import { requireUser } from "./context";
 import { NotFoundError, ForbiddenError } from "./errors";
-import { tasks } from "@/lib/db/schema";
+import { tasks, taskComments } from "@/lib/db/schema";
 import { writeAudit } from "./audit";
+import { notify } from "./notifications";
+import { uz } from "@/lib/i18n/uz";
 
 export type TaskRow = {
   id: string;
@@ -20,6 +22,8 @@ export type TaskRow = {
   bookTitle: string | null;
   assigneeId: string | null;
   assigneeName: string | null;
+  creatorName: string | null;
+  createdAt: string | null;
   isOverdue: boolean;
 };
 
@@ -28,11 +32,13 @@ export async function listTasks(): Promise<TaskRow[]> {
   return withUser(async (tx) => {
     const rows = (await tx.execute(sql`
       SELECT t.id, t.title, t.description, t.status, t.priority,
-             t.due_date, t.completed_at, t.book_id,
-             b.title AS book_title, t.assignee_id, u.name AS assignee_name
+             t.due_date, t.completed_at, t.book_id, t.created_at,
+             b.title AS book_title, t.assignee_id, u.name AS assignee_name,
+             cu.name AS creator_name
       FROM tasks t
       LEFT JOIN books b ON b.id = t.book_id
       LEFT JOIN users u ON u.id = t.assignee_id
+      LEFT JOIN users cu ON cu.id = t.created_by
       ORDER BY
         CASE t.status WHEN 'blocked' THEN 0 WHEN 'in_progress' THEN 1
              WHEN 'todo' THEN 2 WHEN 'review' THEN 3 ELSE 4 END,
@@ -55,6 +61,10 @@ export async function listTasks(): Promise<TaskRow[]> {
         bookTitle: (r.book_title as string) ?? null,
         assigneeId: (r.assignee_id as string) ?? null,
         assigneeName: (r.assignee_name as string) ?? null,
+        creatorName: (r.creator_name as string) ?? null,
+        createdAt: r.created_at
+          ? new Date(r.created_at as string).toISOString()
+          : null,
         isOverdue: !!due && due < today && status !== "done",
       };
     });
@@ -102,6 +112,18 @@ export async function createTask(input: TaskInput): Promise<{ id: string }> {
       entityId: row.id,
       newValue: data,
     });
+    // Notify the assignee when a task is assigned to someone else.
+    const assignee = data.assigneeId || user.id;
+    if (assignee !== user.id) {
+      await notify(tx, {
+        userId: assignee,
+        type: "task_assigned",
+        tone: "info",
+        title: uz.notify.taskAssignedTitle,
+        body: `${uz.notify.taskAssignedBy} ${user.name}: ${data.title}`,
+        link: "/dashboard/vazifalar",
+      });
+    }
     return { id: row.id };
   });
 }
@@ -131,5 +153,76 @@ export async function updateTaskStatus(
       oldValue: { status: old.status },
       newValue: { status },
     });
+  });
+}
+
+/* --------------------------------- comments ------------------------------- */
+
+export type TaskComment = {
+  id: string;
+  body: string;
+  authorName: string | null;
+  createdAt: string;
+  isMine: boolean;
+};
+
+/** Comments on a task, oldest first. RLS scopes to assignee/creator/privileged. */
+export async function listComments(taskId: string): Promise<TaskComment[]> {
+  z.string().uuid().parse(taskId);
+  const user = await requireUser();
+  return withUser(async (tx) => {
+    const rows = (await tx.execute(sql`
+      SELECT c.id, c.body, c.created_at, c.user_id, u.name AS author_name
+      FROM task_comments c
+      LEFT JOIN users u ON u.id = c.user_id
+      WHERE c.task_id = ${taskId}
+      ORDER BY c.created_at ASC
+    `)) as unknown as Array<Record<string, unknown>>;
+    return rows.map((r) => ({
+      id: String(r.id),
+      body: String(r.body),
+      authorName: (r.author_name as string) ?? null,
+      createdAt: new Date(r.created_at as string).toISOString(),
+      isMine: r.user_id === user.id,
+    }));
+  });
+}
+
+/** Add a comment to a task and notify the other party (creator ↔ assignee). */
+export async function addComment(taskId: string, body: string): Promise<void> {
+  z.string().uuid().parse(taskId);
+  const text = z.string().trim().min(1, "Izoh bo'sh").max(2000).parse(body);
+  const user = await requireUser();
+  await withUser(async (tx) => {
+    const [task] = await tx
+      .select({
+        title: tasks.title,
+        assigneeId: tasks.assigneeId,
+        createdBy: tasks.createdBy,
+      })
+      .from(tasks)
+      .where(eq(tasks.id, taskId));
+    if (!task) throw new NotFoundError();
+
+    await tx
+      .insert(taskComments)
+      .values({ taskId, userId: user.id, body: text });
+
+    // notify the counterpart (assignee or creator), never yourself
+    const recipients = new Set(
+      [task.assigneeId, task.createdBy].filter(
+        (id): id is string => !!id && id !== user.id,
+      ),
+    );
+    for (const rid of recipients) {
+      await notify(tx, {
+        userId: rid,
+        type: "info",
+        tone: "info",
+        title: uz.notify.commentTitle,
+        body: `${user.name}: ${text.slice(0, 80)}`,
+        link: "/dashboard/vazifalar",
+      });
+    }
   });
 }

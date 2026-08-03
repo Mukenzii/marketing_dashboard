@@ -15,6 +15,20 @@ if (!connectionString) {
   throw new Error("DATABASE_URL_AUTH is not set");
 }
 
-const client = postgres(connectionString, { prepare: false });
+// Cache on globalThis so HMR (dev) and re-evaluation (prod) reuse one pool
+// (see lib/db/client.ts).
+const g = globalThis as unknown as {
+  __falaqAuthClient?: ReturnType<typeof postgres>;
+};
+const client =
+  g.__falaqAuthClient ??
+  postgres(connectionString, {
+    prepare: false,
+    max: Number(process.env.DB_AUTH_POOL_MAX ?? 4),
+    idle_timeout: 20,
+    connect_timeout: 10,
+    max_lifetime: 60 * 30,
+  });
+g.__falaqAuthClient = client;
 
 export const authDb = drizzle(client, { schema });

@@ -1,7 +1,8 @@
 "use client";
 
 import type { ReactNode } from "react";
-import Link from "next/link";
+import { useTransition } from "react";
+import { useRouter } from "next/navigation";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,14 +14,19 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { AlertTriangle, XCircle, Info } from "lucide-react";
+import { AlertTriangle, XCircle, Info, CheckCheck } from "lucide-react";
 import { uz } from "@/lib/i18n/uz";
+import {
+  markAllReadAction,
+  markReadAction,
+} from "@/lib/actions/notifications";
 
 export type NotifyAlert = {
   id: string;
   tone: "alert" | "warn" | "info";
   title: string;
   desc: string;
+  link?: string | null;
 };
 
 type Props = {
@@ -42,6 +48,24 @@ const NotificationDropdown = ({
   defaultOpen,
   align = "end",
 }: Props) => {
+  const router = useRouter();
+  const [pending, start] = useTransition();
+
+  function openItem(a: NotifyAlert) {
+    start(async () => {
+      await markReadAction(a.id);
+      if (a.link) router.push(a.link);
+      else router.refresh();
+    });
+  }
+
+  function readAll() {
+    start(async () => {
+      await markAllReadAction();
+      router.refresh();
+    });
+  }
+
   return (
     <div className="flex items-center justify-center">
       <DropdownMenu defaultOpen={defaultOpen}>
@@ -69,6 +93,8 @@ const NotificationDropdown = ({
                 return (
                   <DropdownMenuItem
                     key={a.id}
+                    disabled={pending}
+                    onClick={() => openItem(a)}
                     className="mx-1.5 my-1 p-2 flex items-center gap-3 cursor-pointer"
                   >
                     <div className={cn("p-2.5 rounded-xl", t.bg, t.fg)}>
@@ -88,15 +114,19 @@ const NotificationDropdown = ({
             )}
           </DropdownMenuGroup>
 
-          <div className="mx-1.5 my-1 p-2">
-            <Button
-              className="rounded-xl w-full cursor-pointer h-9 hover:bg-primary/80"
-              nativeButton={false}
-              render={<Link href="/dashboard-shell-01/natijalar" />}
-            >
-              {uz.notifications.seeAll}
-            </Button>
-          </div>
+          {alerts.length > 0 && (
+            <div className="mx-1.5 my-1 p-2">
+              <Button
+                variant="outline"
+                disabled={pending}
+                onClick={readAll}
+                className="rounded-xl w-full cursor-pointer h-9 gap-2"
+              >
+                <CheckCheck className="size-4" />
+                {uz.notifications.markAllRead}
+              </Button>
+            </div>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
     </div>

@@ -12,7 +12,7 @@ export async function getSpendSplit(): Promise<{
   return withUser(async (tx) => {
     const ad = (await tx.execute(sql`
       SELECT COALESCE(SUM(i.spend * i.fx_rate), 0)::float8 AS uzs
-      FROM insights_daily i WHERE i.entity_type = 'ad'
+      FROM insights_daily i WHERE i.entity_type = 'campaign'
     `)) as unknown as Array<{ uzs: number }>;
     const man = (await tx.execute(sql`
       SELECT type, COALESCE(SUM(amount * fx_rate), 0)::float8 AS uzs
@@ -37,10 +37,10 @@ export async function getSpendTrend(): Promise<
         COALESCE(a.spend_uzs, 0)::float8 AS spend_uzs,
         COALESCE(a.impressions, 0)::float8 AS impressions,
         COALESCE(r.reach, 0)::float8 AS reach
-      FROM (SELECT DISTINCT date FROM insights_daily WHERE entity_type='ad') d
+      FROM (SELECT DISTINCT date FROM insights_daily WHERE entity_type='campaign') d
       LEFT JOIN (
         SELECT date, SUM(spend * fx_rate) AS spend_uzs, SUM(impressions) AS impressions
-        FROM insights_daily WHERE entity_type='ad' GROUP BY date
+        FROM insights_daily WHERE entity_type='campaign' GROUP BY date
       ) a ON a.date = d.date
       LEFT JOIN (
         SELECT date, MAX(reach) AS reach FROM insights_daily
@@ -73,7 +73,7 @@ export async function getSpendByBook(): Promise<
         (COALESCE(ad.s,0) + COALESCE(bl.a,0) + COALESCE(pr.a,0))::float8 AS spend_uzs
       FROM books b
       LEFT JOIN (SELECT c.book_id, SUM(i.spend*i.fx_rate) s FROM campaigns c
-                 JOIN insights_daily i ON i.campaign_id=c.id AND i.entity_type='ad'
+                 JOIN insights_daily i ON i.campaign_id=c.id AND i.entity_type='campaign'
                  GROUP BY c.book_id) ad ON ad.book_id=b.id
       LEFT JOIN (SELECT book_id, SUM(amount*fx_rate) a FROM spend_entries
                  WHERE type='blogger' GROUP BY book_id) bl ON bl.book_id=b.id
