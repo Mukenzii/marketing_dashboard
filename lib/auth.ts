@@ -7,11 +7,16 @@ import { eq } from "drizzle-orm";
 import { authDb as db } from "./db/auth-client";
 import { users, sessions, accounts, verifications } from "./db/schema";
 
-const isProd = process.env.NODE_ENV === "production";
+// Secure cookies follow the public URL's scheme, NOT NODE_ENV — a browser will
+// not store a `Secure` cookie over plain http, so tying this to https lets the
+// app work over http://<ip>:3000 today and auto-secure behind HTTPS later.
+const publicUrl = process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
+const isHttps = publicUrl.startsWith("https://");
 
-// Origins allowed to drive auth (CSRF defense). Add your production URL here.
+// Origins allowed to drive auth (CSRF defense). BETTER_AUTH_URL must be the URL
+// users actually hit (e.g. http://46.8.195.51:3000); add more via TRUSTED_ORIGINS.
 const trustedOrigins = [
-  process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
+  publicUrl,
   ...(process.env.TRUSTED_ORIGINS?.split(",").map((s) => s.trim()).filter(Boolean) ??
     []),
 ];
@@ -72,8 +77,9 @@ export const auth = betterAuth({
   },
 
   advanced: {
-    // Secure cookies in production (HTTPS only).
-    useSecureCookies: isProd,
+    // Secure only over https (see publicUrl above) — required so cookies persist
+    // over plain http, and enabled automatically once served behind TLS.
+    useSecureCookies: isHttps,
   },
 
   // role/status/lastLoginAt live on our users table; expose them to Better Auth
