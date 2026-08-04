@@ -59,7 +59,8 @@ export async function listManagerSummaries(): Promise<ManagerSummary[]> {
              COALESCE(MAX(t.open_tasks), 0)::int AS open_tasks,
              COALESCE(MAX(t.overdue_tasks), 0)::int AS overdue_tasks
       FROM users u
-      JOIN roles r ON r.key = u.role AND r.is_privileged = false
+      JOIN roles r ON r.key = u.role
+                   AND u.role IN ('pr_manager', 'smm_manager')
       LEFT JOIN book_ad ba ON ba.owner_id = u.id
       LEFT JOIN man m ON m.owner_id = u.id
       LEFT JOIN tk t ON t.assignee_id = u.id

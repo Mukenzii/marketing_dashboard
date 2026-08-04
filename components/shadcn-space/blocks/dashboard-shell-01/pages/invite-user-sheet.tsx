@@ -58,7 +58,7 @@ export default function InviteUserSheet({ roles }: { roles: Role[] }) {
   }, [state, router]);
 
   const defaultRole =
-    roles.find((r) => !r.isPrivileged)?.key ?? roles[0]?.key ?? "";
+    roles.find((r) => r.key === "pr_manager")?.key ?? roles[0]?.key ?? "";
 
   return (
     <Sheet
