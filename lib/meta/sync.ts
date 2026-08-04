@@ -482,14 +482,33 @@ export async function runMetaSync(opts?: {
         time_increment: "1",
         date_preset: preset,
       });
-      const adInsightRows =
-        (opts?.withEntities ?? true)
-          ? await meta.edge(actId, "insights", METRIC_FIELDS + ",ad_id,campaign_id", {
-              level: "ad",
-              time_increment: "1",
-              date_preset: preset,
-            })
-          : [];
+      // Ad-level insights power the Kreativlar leaderboard, which shows TOTALS
+      // per creative — so pull them AGGREGATED over the window (one row per ad),
+      // NOT per-day. A daily × 1000+ ad pull is far too slow for a click-and-wait
+      // sync (it times out). Best-effort: a failure here never breaks the sync.
+      let adInsightRows: Array<Record<string, unknown>> = [];
+      if (opts?.withEntities ?? true) {
+        try {
+          adInsightRows = await meta.edge(
+            actId,
+            "insights",
+            METRIC_FIELDS + ",ad_id,campaign_id",
+            { level: "ad", date_preset: preset },
+          );
+        } catch (e) {
+          console.warn(
+            "[meta-sync] ad-level insights failed (non-fatal):",
+            (e as Error).message,
+          );
+        }
+      }
+      // Aggregated rows aren't keyed by a real day, so replace the ad snapshot
+      // each run instead of accumulating overlapping windows.
+      if (adInsightRows.length) {
+        await db.execute(
+          sql`DELETE FROM insights_daily WHERE entity_type = 'ad' AND ad_account_id = ${accountUuid}`,
+        );
+      }
 
       const rows = [
         ...campRows.map((r) =>
