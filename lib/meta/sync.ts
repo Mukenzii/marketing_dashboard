@@ -465,9 +465,9 @@ export async function runMetaSync(opts?: {
       // ---- daily insights ----
       // Campaign-level rows carry additive metrics (spend/impressions/clicks)
       // AND deduped reach/frequency; account-level rows carry account reach for
-      // the MoM comparison. Ad-level is intentionally skipped — a per-ad × daily
-      // pull (1000+ ads) trips Meta's app rate limit and adds nothing the
-      // dashboard aggregates don't already get from the campaign grain.
+      // the MoM comparison. Ad-level rows (only when withEntities) power the
+      // Kreativlar leaderboard — a per-ad × daily pull is heavier on Meta's rate
+      // limit, so it's tied to the same flag that syncs the ad entities.
       const preset =
         days <= 7 ? "last_7d" : days <= 14 ? "last_14d" : days <= 30 ? "last_30d" : "last_90d";
 
@@ -482,6 +482,14 @@ export async function runMetaSync(opts?: {
         time_increment: "1",
         date_preset: preset,
       });
+      const adInsightRows =
+        (opts?.withEntities ?? true)
+          ? await meta.edge(actId, "insights", METRIC_FIELDS + ",ad_id,campaign_id", {
+              level: "ad",
+              time_increment: "1",
+              date_preset: preset,
+            })
+          : [];
 
       const rows = [
         ...campRows.map((r) =>
@@ -497,6 +505,17 @@ export async function runMetaSync(opts?: {
         ),
         ...acctRows.map((r) =>
           mapInsight(r, "account", actId, null, accountUuid, currency, fxStr),
+        ),
+        ...adInsightRows.map((r) =>
+          mapInsight(
+            r,
+            "ad",
+            r.ad_id as string,
+            campUuidByMeta.get(r.campaign_id as string) ?? null,
+            accountUuid,
+            currency,
+            fxStr,
+          ),
         ),
       ];
       for (const v of rows) {
