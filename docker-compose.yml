@@ -79,6 +79,9 @@ services:
       DATABASE_URL: postgres://falaq_app:${APP_DB_PASSWORD}@db:5432/${POSTGRES_DB}
       # Better Auth connection (auth tables only)
       DATABASE_URL_AUTH: postgres://falaq_auth:${AUTH_DB_PASSWORD}@db:5432/${POSTGRES_DB}
+      # Owner connection — used ONLY by the CEO-triggered Meta sync (Sozlamalar),
+      # which must bypass RLS to write ad_accounts/campaigns/insights.
+      DATABASE_URL_MIGRATOR: postgres://falaq_owner:${OWNER_DB_PASSWORD}@db:5432/${POSTGRES_DB}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
       TRUSTED_ORIGINS: ${TRUSTED_ORIGINS:-}
