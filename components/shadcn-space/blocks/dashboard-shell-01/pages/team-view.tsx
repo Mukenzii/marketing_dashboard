@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import { uz, fmtUZS, fmtNumber } from "@/lib/i18n/uz";
 import { pct, dec } from "@/lib/metrics";
 import type { ManagerSummary } from "@/lib/dal/team";
+import InviteUserSheet, { type Role } from "./invite-user-sheet";
 
 const NEUTRAL = "bg-muted text-muted-foreground";
 
@@ -78,8 +79,10 @@ function KpiCard({
 
 export default function TeamView({
   managers,
+  roles,
 }: {
   managers: ManagerSummary[];
+  roles: Role[];
 }) {
   const rows = [...managers].sort((a, b) => b.spendUZS - a.spendUZS);
   const totalBudget = rows.reduce((s, m) => s + m.budgetUZS, 0);
@@ -87,11 +90,14 @@ export default function TeamView({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold text-foreground">
-          {uz.nav.team}
-        </h1>
-        <p className="text-sm text-muted-foreground">{uz.team.subtitle}</p>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-semibold text-foreground">
+            {uz.nav.team}
+          </h1>
+          <p className="text-sm text-muted-foreground">{uz.team.subtitle}</p>
+        </div>
+        <InviteUserSheet roles={roles} />
       </div>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
