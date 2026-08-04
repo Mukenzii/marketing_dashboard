@@ -103,14 +103,21 @@ export async function listCampaigns(): Promise<CampaignRow[]> {
 export type CreativeRow = {
   id: string;
   name: string;
+  campaignId: string;
   campaignName: string | null;
   thumbnailUrl: string | null;
   spendUSD: number;
   impressions: number;
+  clicks: number;
+  landingPageViews: number;
+  leads: number;
   frequency: number | null;
   hookRate: number | null;
   holdRate: number | null;
   ctr: number | null;
+  cpl: number | null;
+  visitRate: number | null;
+  leadRate: number | null;
   cpm: number | null;
   fatigue: boolean;
 };
@@ -119,8 +126,8 @@ export type CreativeRow = {
 export async function listCreatives(): Promise<CreativeRow[]> {
   return withUser(async (tx) => {
     const rows = (await tx.execute(sql`
-      SELECT a.id, a.name, a.thumbnail_url,
-             c.parsed_book_title, c.name_raw,
+      SELECT a.id, a.name, a.thumbnail_url, a.meta_ad_id,
+             c.id AS campaign_id, c.parsed_book_title, c.name_raw,
              COALESCE(SUM(i.spend),0) AS spend, MAX(i.fx_rate) AS fx_rate,
              COALESCE(SUM(i.impressions),0) AS impressions,
              COALESCE(SUM(i.clicks),0) AS clicks,
@@ -137,7 +144,7 @@ export async function listCreatives(): Promise<CreativeRow[]> {
       JOIN ad_sets s ON s.id = a.ad_set_id
       JOIN campaigns c ON c.id = s.campaign_id
       LEFT JOIN insights_daily i ON i.entity_id = a.meta_ad_id AND i.entity_type = 'ad'
-      GROUP BY a.id, c.parsed_book_title, c.name_raw
+      GROUP BY a.id, c.id, c.parsed_book_title, c.name_raw
       ORDER BY spend DESC
     `)) as unknown as Array<Record<string, unknown>>;
 
@@ -148,15 +155,22 @@ export async function listCreatives(): Promise<CreativeRow[]> {
       return {
         id: String(r.id),
         name: String(r.name),
+        campaignId: String(r.campaign_id),
         campaignName:
           (r.parsed_book_title as string) || (r.name_raw as string) || null,
         thumbnailUrl: (r.thumbnail_url as string) ?? null,
         spendUSD: agg.spend,
         impressions: agg.impressions,
+        clicks: agg.clicks,
+        landingPageViews: agg.landingPageViews,
+        leads: agg.leads,
         frequency: m.frequency,
         hookRate: m.hookRate,
         holdRate: m.holdRate,
         ctr: m.ctr,
+        cpl: m.cpl,
+        visitRate: m.visitRate,
+        leadRate: m.leadRate,
         cpm: m.cpm,
         fatigue: m.frequency != null && m.frequency > 4,
       };

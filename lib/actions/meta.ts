@@ -10,15 +10,15 @@ const BASE = "/dashboard";
 
 /**
  * On-demand Meta refresh (CEO only). Upsert-only — keeps books and their
- * CEO-assigned owners; refreshes campaigns + campaign/account daily insights.
- * Skips ad sets/ads to stay fast and well under Meta's rate limit.
+ * CEO-assigned owners; refreshes campaigns + campaign/account daily insights
+ * AND ad sets/ads with ad-level insights (powers the Kreativlar leaderboard).
  */
 export async function syncMetaAction(): Promise<ActionResult> {
   try {
     await requireCeoOrThrow();
     if (!metaConfigured())
       return { ok: false, error: "Meta sozlanmagan (.env to'ldirilmagan)" };
-    await runMetaSync({ reset: false, days: 30, withEntities: false });
+    await runMetaSync({ reset: false, days: 30, withEntities: true });
     revalidatePath(BASE, "layout");
     return { ok: true };
   } catch (e) {
