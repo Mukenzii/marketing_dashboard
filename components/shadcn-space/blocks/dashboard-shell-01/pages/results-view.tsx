@@ -83,14 +83,8 @@ export default function ResultsView({
                     <TableHead className="p-2 text-right">
                       {uz.results.colLeads}
                     </TableHead>
-                    <TableHead className="p-2 text-right">
-                      {uz.results.colCpl}
-                    </TableHead>
-                    <TableHead className="p-2 text-right">
-                      {uz.results.colVisitRate}
-                    </TableHead>
                     <TableHead className="p-3 pe-6 text-right">
-                      {uz.results.colLeadRate}
+                      {uz.results.colCpl}
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -127,14 +121,8 @@ export default function ResultsView({
                       <TableCell className="whitespace-nowrap text-right text-sm text-foreground">
                         {fmtNumber(c.leads)}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap text-right text-sm text-foreground">
-                        {c.metrics.cpl == null ? "—" : `$${dec(c.metrics.cpl)}`}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap text-right text-sm text-foreground">
-                        {pct(c.metrics.visitRate)}
-                      </TableCell>
                       <TableCell className="whitespace-nowrap p-3 pe-6 text-right text-sm text-foreground">
-                        {pct(c.metrics.leadRate)}
+                        {c.metrics.cpl == null ? "—" : `$${dec(c.metrics.cpl)}`}
                       </TableCell>
                     </TableRow>
                   ))}
