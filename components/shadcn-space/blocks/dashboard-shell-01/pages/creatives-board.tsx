@@ -78,7 +78,7 @@ function CreativeCard({ c, rank }: { c: CreativeRow; rank: number }) {
               </p>
             )}
           </div>
-          {/* headline numbers */}
+          {/* headline number */}
           <div className="flex shrink-0 items-center gap-5 text-right">
             <div className="flex flex-col">
               <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
@@ -86,22 +86,6 @@ function CreativeCard({ c, rank }: { c: CreativeRow; rank: number }) {
               </span>
               <span className="text-base font-bold tabular-nums text-card-foreground">
                 {fmtUSD(c.spendUSD)}
-              </span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                {uz.creatives.leads}
-              </span>
-              <span className="text-base font-bold tabular-nums text-card-foreground">
-                {fmtNumber(c.leads)}
-              </span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                {uz.creatives.cpl}
-              </span>
-              <span className="text-base font-bold tabular-nums text-card-foreground">
-                {c.cpl == null ? "—" : fmtUSD(c.cpl)}
               </span>
             </div>
           </div>

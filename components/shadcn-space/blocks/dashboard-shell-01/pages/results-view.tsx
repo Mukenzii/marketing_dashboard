@@ -1,4 +1,3 @@
-import { Info } from "lucide-react";
 
 import {
   Card,
@@ -16,7 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { uz, fmtNumber } from "@/lib/i18n/uz";
-import { pct, dec } from "@/lib/metrics";
+import { pct } from "@/lib/metrics";
 import type { CampaignRow } from "@/lib/dal/campaigns";
 
 export default function ResultsView({
@@ -31,11 +30,6 @@ export default function ResultsView({
           {uz.nav.results}
         </h1>
         <p className="text-sm text-muted-foreground">{uz.results.subtitle}</p>
-      </div>
-
-      <div className="flex items-start gap-2 rounded-lg border border-blue-500/20 bg-blue-500/5 px-4 py-3">
-        <Info size={16} className="mt-0.5 shrink-0 text-blue-600" />
-        <p className="text-sm text-muted-foreground">{uz.results.note}</p>
       </div>
 
       <Card className="w-full py-6 gap-5">
@@ -77,14 +71,8 @@ export default function ResultsView({
                     <TableHead className="p-2 text-right">
                       {uz.results.colHook}
                     </TableHead>
-                    <TableHead className="p-2 text-right">
-                      {uz.results.colHold}
-                    </TableHead>
-                    <TableHead className="p-2 text-right">
-                      {uz.results.colLeads}
-                    </TableHead>
                     <TableHead className="p-3 pe-6 text-right">
-                      {uz.results.colCpl}
+                      {uz.results.colHold}
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -115,14 +103,8 @@ export default function ResultsView({
                       <TableCell className="whitespace-nowrap text-right text-sm text-foreground">
                         {pct(c.metrics.hookRate)}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap text-right text-sm text-foreground">
-                        {pct(c.metrics.holdRate)}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap text-right text-sm text-foreground">
-                        {fmtNumber(c.leads)}
-                      </TableCell>
                       <TableCell className="whitespace-nowrap p-3 pe-6 text-right text-sm text-foreground">
-                        {c.metrics.cpl == null ? "—" : `$${dec(c.metrics.cpl)}`}
+                        {pct(c.metrics.holdRate)}
                       </TableCell>
                     </TableRow>
                   ))}
