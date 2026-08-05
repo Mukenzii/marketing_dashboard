@@ -92,10 +92,13 @@ function mapInsight(
     outboundClicks: actionVal(r.outbound_clicks, ["outbound_click"]),
     uniqueOutboundClicks: actionVal(r.unique_outbound_clicks, ["outbound_click"]),
     landingPageViews: actionVal(r.actions, ["landing_page_view"]),
+    // "Leads" = form/pixel leads OR (for this messaging account) new
+    // conversations started — that IS the lead for a Click-to-Telegram funnel.
     leads: actionVal(r.actions, [
       "lead",
       "onsite_conversion.lead_grouped",
       "offsite_conversion.fb_pixel_lead",
+      "onsite_conversion.messaging_conversation_started_7d",
     ]),
     video3sViews: actionVal(r.video_play_actions, ["video_view"]),
     videoThruplay: actionVal(r.video_thruplay_watched_actions, ["video_view"]),

@@ -348,7 +348,7 @@ export const uz = {
     colCpl: "CPL",
     colVisitRate: "Tashrif darajasi",
     colLeadRate: "Lid darajasi",
-    note: "Lidga asoslangan ko'rsatkichlar (CPL, Lidlar, Tashrif darajasi, Lid darajasi) ThruPlay uchun optimallashtirilgan kampaniyalarda 0 bo'ladi.",
+    note: "Lidlar = boshlangan suhbatlar (messaging) yoki lid-forma lidlari. Tashrif va Lid darajasi faqat veb-sayt (landing) kampaniyalarida ko'rinadi; messaging va tanishtiruv kampaniyalarida 0 bo'ladi.",
     empty: "Natijalar yo'q",
     emptyBody: "Hozircha hech qanday kampaniya natijalari mavjud emas.",
   },
