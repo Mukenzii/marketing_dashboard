@@ -108,15 +108,12 @@ function CreativeCard({ c, rank }: { c: CreativeRow; rank: number }) {
         </div>
 
         {/* metric grid */}
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
           <Metric label={uz.creatives.ctr} value={pctOrDash(c.ctr)} toneClass={tone(c.ctr, 0.01, 0.003)} />
           <Metric label={uz.creatives.hookRate} value={pctOrDash(c.hookRate)} toneClass={tone(c.hookRate, 0.25, 0.1)} />
           <Metric label={uz.creatives.holdRate} value={pctOrDash(c.holdRate)} toneClass={tone(c.holdRate, 0.5, 0.2)} />
-          <Metric label={uz.creatives.visitRate} value={pctOrDash(c.visitRate)} toneClass={tone(c.visitRate, 0.5, 0.2)} />
-          <Metric label={uz.creatives.leadRate} value={pctOrDash(c.leadRate)} toneClass={tone(c.leadRate, 0.05, 0.01)} />
           <Metric label={uz.creatives.impressions} value={fmtNumber(c.impressions)} />
           <Metric label={uz.creatives.clicks} value={fmtNumber(c.clicks)} />
-          <Metric label={uz.creatives.lpViews} value={fmtNumber(c.landingPageViews)} />
         </div>
       </CardContent>
     </Card>
