@@ -127,6 +127,13 @@
       "when": 1785491500000,
       "tag": "0017_dashboard_index",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1785491600000,
+      "tag": "0018_user_avatars",
+      "breakpoints": true
     }
   ]
 }
