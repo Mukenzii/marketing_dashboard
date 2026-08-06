@@ -1,11 +1,11 @@
 import AppSidebar from "@/components/shadcn-space/blocks/dashboard-shell-01/app-sidebar";
 import TeamView from "@/components/shadcn-space/blocks/dashboard-shell-01/pages/team-view";
-import { requireCeo } from "@/lib/dal/context";
+import { requireManagement } from "@/lib/dal/context";
 import { listManagerSummaries } from "@/lib/dal/team";
 import { listRoles } from "@/lib/dal/admin";
 
 export default async function Page() {
-  await requireCeo();
+  const user = await requireManagement();
   const [managers, roles] = await Promise.all([
     listManagerSummaries(),
     listRoles(),
@@ -13,7 +13,8 @@ export default async function Page() {
   return (
     <AppSidebar>
       <div className="mx-auto w-full max-w-[1400px] p-6 flex flex-col gap-6">
-        <TeamView managers={managers} roles={roles} />
+        {/* Adding members is user management → CEO only. */}
+        <TeamView managers={managers} roles={roles} canInvite={user.isCeo} />
       </div>
     </AppSidebar>
   );

@@ -1,10 +1,10 @@
 import AppSidebar from "@/components/shadcn-space/blocks/dashboard-shell-01/app-sidebar";
 import AuditView from "@/components/shadcn-space/blocks/dashboard-shell-01/pages/audit";
 import { listAudit } from "@/lib/dal/admin";
-import { requireCeo } from "@/lib/dal/context";
+import { requireManagement } from "@/lib/dal/context";
 
 export default async function Page() {
-  await requireCeo();
+  await requireManagement();
   const rows = await listAudit();
   return (
     <AppSidebar>

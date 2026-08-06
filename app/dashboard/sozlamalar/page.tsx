@@ -2,10 +2,10 @@ import AppSidebar from "@/components/shadcn-space/blocks/dashboard-shell-01/app-
 import SettingsView from "@/components/shadcn-space/blocks/dashboard-shell-01/pages/settings";
 import MetaSyncCard from "@/components/shadcn-space/blocks/dashboard-shell-01/pages/meta-sync-card";
 import { listThresholds, latestSyncRun } from "@/lib/dal/admin";
-import { requireCeo } from "@/lib/dal/context";
+import { requireCeoOnly } from "@/lib/dal/context";
 
 export default async function Page() {
-  await requireCeo();
+  await requireCeoOnly();
   const [thresholds, lastSync] = await Promise.all([
     listThresholds(),
     latestSyncRun(),

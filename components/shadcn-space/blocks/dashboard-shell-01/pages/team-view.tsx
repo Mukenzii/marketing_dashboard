@@ -80,9 +80,11 @@ function KpiCard({
 export default function TeamView({
   managers,
   roles,
+  canInvite = false,
 }: {
   managers: ManagerSummary[];
   roles: Role[];
+  canInvite?: boolean;
 }) {
   const rows = [...managers].sort((a, b) => b.spendUZS - a.spendUZS);
   const totalBudget = rows.reduce((s, m) => s + m.budgetUZS, 0);
@@ -97,7 +99,7 @@ export default function TeamView({
           </h1>
           <p className="text-sm text-muted-foreground">{uz.team.subtitle}</p>
         </div>
-        <InviteUserSheet roles={roles} />
+        {canInvite && <InviteUserSheet roles={roles} />}
       </div>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">

@@ -48,18 +48,37 @@ const I = {
 
 /**
  * Nav is built and filtered ON THE SERVER per role — items a role can't reach
- * never enter that browser's payload (not merely hidden with CSS).
- * - content_team: creatives + tasks only (the only restricted role)
- * - every other role (ceo, head_of_marketing, pr_manager, smm_manager): everything
+ * never enter that browser's payload (not merely hidden with CSS). Access by
+ * position:
+ * - ceo: everything (incl. Users + Settings, which are CEO-only)
+ * - head_of_marketing: everything except Users + Settings
+ * - pr_manager: dashboard, creatives, books, tasks, results, campaigns
+ * - smm_manager: dashboard, creatives, campaigns, tasks, results
+ * - content_team: creatives + tasks only
  */
 export function getNavForRole(role: string): NavItem[] {
-  // Only content_team is restricted — it gets Creatives + Tasks and no dashboard.
-  if (role === "content_team") {
-    return [sectionMain, I.creatives, I.tasks];
+  switch (role) {
+    case "ceo":
+      return [
+        sectionMain, I.dashboard, I.creatives, I.books, I.tasks, I.results,
+        sectionMgmt, I.campaigns, I.team, I.budgets, I.users, I.settings, I.audit,
+      ];
+    case "head_of_marketing":
+      return [
+        sectionMain, I.dashboard, I.creatives, I.books, I.tasks, I.results,
+        sectionMgmt, I.campaigns, I.team, I.budgets, I.audit,
+      ];
+    case "smm_manager":
+      return [
+        sectionMain, I.dashboard, I.creatives, I.campaigns, I.tasks, I.results,
+      ];
+    case "content_team":
+      return [sectionMain, I.creatives, I.tasks];
+    case "pr_manager":
+    default:
+      return [
+        sectionMain, I.dashboard, I.creatives, I.books, I.tasks, I.results,
+        sectionMgmt, I.campaigns,
+      ];
   }
-  // Every other role gets the full dashboard.
-  return [
-    sectionMain, I.dashboard, I.creatives, I.books, I.tasks, I.results,
-    sectionMgmt, I.campaigns, I.team, I.budgets, I.users, I.settings, I.audit,
-  ];
 }

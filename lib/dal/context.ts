@@ -107,21 +107,28 @@ export async function requireCeoOrThrow(): Promise<CurrentUser> {
   return user;
 }
 
-/**
- * Account & role management. Per the owner's policy, the ONLY restricted role is
- * content_team; every other role may manage accounts. Redirects content_team.
- */
+/** CEO-ONLY (not even Head): account/role management + Settings. Redirects. */
 export async function requireCeoOnly(): Promise<CurrentUser> {
   const user = await requireUser();
-  if (user.role === "content_team") redirect("/dashboard/kreativlar");
+  if (!user.isCeo) redirect("/dashboard/ruxsat-yoq");
   return user;
 }
 
-/** Same policy, non-redirecting (server actions): only content_team is blocked. */
+/** CEO-ONLY, non-redirecting (server actions). */
 export async function requireCeoOnlyOrThrow(): Promise<CurrentUser> {
   const user = await getCurrentUser();
-  if (!user || user.role === "content_team") throw new ForbiddenError();
+  if (!user?.isCeo) throw new ForbiddenError();
   return user;
+}
+
+/**
+ * Management pages (Team, Budgets, Audit): CEO + Head of Marketing only. Checks
+ * role explicitly (not the is_privileged flag, which PR/SMM also carry).
+ */
+export async function requireManagement(): Promise<CurrentUser> {
+  const user = await requireUser();
+  if (user.role === "ceo" || user.role === "head_of_marketing") return user;
+  redirect("/dashboard/ruxsat-yoq");
 }
 
 /**

@@ -2,13 +2,13 @@ import AppSidebar from "@/components/shadcn-space/blocks/dashboard-shell-01/app-
 import BudgetsView from "@/components/shadcn-space/blocks/dashboard-shell-01/pages/budgets";
 import { listBooks } from "@/lib/dal/books";
 import { listUsers } from "@/lib/dal/admin";
-import { requireCeo } from "@/lib/dal/context";
+import { requireManagement } from "@/lib/dal/context";
 
 // Roles that own books (the assignable owners in the budget form).
 const MANAGER_ROLES = new Set(["pr_manager", "smm_manager"]);
 
 export default async function Page() {
-  await requireCeo();
+  await requireManagement();
   const [books, users] = await Promise.all([listBooks(), listUsers()]);
 
   const managers = users
