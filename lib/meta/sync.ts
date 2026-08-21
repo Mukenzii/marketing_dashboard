@@ -505,6 +505,10 @@ export async function runMetaSync(opts?: {
           );
         }
       }
+      console.log(
+        "[meta-sync] ad-level insight rows fetched:",
+        adInsightRows.length,
+      );
       // Aggregated rows aren't keyed by a real day, so replace the ad snapshot
       // each run instead of accumulating overlapping windows.
       if (adInsightRows.length) {
@@ -567,6 +571,7 @@ export async function runMetaSync(opts?: {
       console.warn("[meta-sync] notification step failed (non-fatal):", (e as Error).message);
     }
 
+    console.log("[meta-sync] done:", JSON.stringify(summary));
     return summary;
   } catch (e) {
     await db
