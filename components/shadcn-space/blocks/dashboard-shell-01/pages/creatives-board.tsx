@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ImageIcon, Trophy } from "lucide-react";
+import { BookOpen, ChevronDown, ImageIcon, Trophy } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -104,33 +105,50 @@ function CreativeCard({ c, rank }: { c: CreativeRow; rank: number }) {
   );
 }
 
+type BookGroup = {
+  key: string;
+  title: string;
+  items: CreativeRow[];
+  spend: number;
+};
+
 export default function CreativesBoard({
   creatives,
 }: {
   creatives: CreativeRow[];
 }) {
-  const [campaign, setCampaign] = useState("all");
   const [query, setQuery] = useState("");
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
-  // Campaign filter options, ranked by how many creatives each has.
-  const campaigns = useMemo(() => {
-    const m = new Map<string, string>();
+  // Group creatives by book; each group's creatives ranked by spend, groups
+  // ranked by total spend.
+  const books = useMemo<BookGroup[]>(() => {
+    const map = new Map<string, BookGroup>();
     for (const c of creatives) {
-      if (!m.has(c.campaignId)) m.set(c.campaignId, c.campaignName ?? c.campaignId);
+      const key = c.bookId ?? c.bookTitle;
+      let g = map.get(key);
+      if (!g) {
+        g = { key, title: c.bookTitle, items: [], spend: 0 };
+        map.set(key, g);
+      }
+      g.items.push(c);
+      g.spend += c.spendUSD;
     }
-    return [...m.entries()]
-      .map(([id, name]) => ({ id, name }))
-      .filter((c) => c.name.toLowerCase().includes(query.toLowerCase()))
-      .sort((a, b) => a.name.localeCompare(b.name));
+    let list = [...map.values()];
+    for (const g of list) g.items.sort((a, b) => b.spendUSD - a.spendUSD);
+    const q = query.trim().toLowerCase();
+    if (q) list = list.filter((g) => g.title.toLowerCase().includes(q));
+    list.sort((a, b) => b.spend - a.spend);
+    return list;
   }, [creatives, query]);
 
-  const shown = useMemo(() => {
-    const list =
-      campaign === "all"
-        ? creatives
-        : creatives.filter((c) => c.campaignId === campaign);
-    return [...list].sort((a, b) => b.spendUSD - a.spendUSD);
-  }, [creatives, campaign]);
+  const toggle = (key: string) =>
+    setExpanded((prev) => {
+      const n = new Set(prev);
+      if (n.has(key)) n.delete(key);
+      else n.add(key);
+      return n;
+    });
 
   return (
     <>
@@ -140,7 +158,7 @@ export default function CreativesBoard({
           {uz.creatives.ranking}
         </h1>
         <p className="text-sm text-muted-foreground">
-          {uz.creatives.rankingSubtitle}
+          {uz.creatives.byBookSubtitle}
         </p>
       </div>
 
@@ -157,35 +175,63 @@ export default function CreativesBoard({
         </Card>
       ) : (
         <>
-          {/* campaign filter */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="flex items-center gap-3">
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder={uz.creatives.searchCampaign}
+              placeholder={uz.creatives.searchBook}
               className="h-9 sm:max-w-xs"
             />
-            <select
-              value={campaign}
-              onChange={(e) => setCampaign(e.target.value)}
-              className="h-9 rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-ring/40 sm:max-w-sm"
-            >
-              <option value="all">{uz.creatives.allCampaigns}</option>
-              {campaigns.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
             <span className="text-xs text-muted-foreground">
-              {shown.length} / {creatives.length}
+              {books.length} {uz.creatives.booksWord} · {creatives.length}{" "}
+              {uz.creatives.creativesWord}
             </span>
           </div>
 
           <div className="flex flex-col gap-3">
-            {shown.map((c, i) => (
-              <CreativeCard key={c.id} c={c} rank={i} />
-            ))}
+            {books.map((book) => {
+              const open = expanded.has(book.key);
+              return (
+                <Card
+                  key={book.key}
+                  className="ring-0 border rounded-2xl py-0 overflow-hidden"
+                >
+                  <button
+                    onClick={() => toggle(book.key)}
+                    className="flex w-full items-center gap-3 p-4 text-left transition-colors hover:bg-muted/30"
+                  >
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600">
+                      <BookOpen className="size-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-card-foreground">
+                        {book.title}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {book.items.length} {uz.creatives.creativesWord} ·{" "}
+                        {fmtUSD(book.spend)}
+                      </p>
+                    </div>
+                    <Badge className="shrink-0 bg-blue-500/10 font-medium text-blue-600">
+                      {book.items.length}
+                    </Badge>
+                    <ChevronDown
+                      className={cn(
+                        "size-5 shrink-0 text-muted-foreground transition-transform",
+                        open && "rotate-180",
+                      )}
+                    />
+                  </button>
+                  {open && (
+                    <div className="flex flex-col gap-3 border-t p-4">
+                      {book.items.map((c, i) => (
+                        <CreativeCard key={c.id} c={c} rank={i} />
+                      ))}
+                    </div>
+                  )}
+                </Card>
+              );
+            })}
           </div>
         </>
       )}

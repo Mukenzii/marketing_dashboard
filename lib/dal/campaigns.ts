@@ -105,6 +105,8 @@ export type CreativeRow = {
   name: string;
   campaignId: string;
   campaignName: string | null;
+  bookId: string | null;
+  bookTitle: string;
   thumbnailUrl: string | null;
   spendUSD: number;
   impressions: number;
@@ -128,6 +130,7 @@ export async function listCreatives(): Promise<CreativeRow[]> {
     const rows = (await tx.execute(sql`
       SELECT a.id, a.name, a.thumbnail_url, a.meta_ad_id,
              c.id AS campaign_id, c.parsed_book_title, c.name_raw,
+             b.id AS book_id, b.title AS book_title,
              COALESCE(SUM(i.spend),0) AS spend, MAX(i.fx_rate) AS fx_rate,
              COALESCE(SUM(i.impressions),0) AS impressions,
              COALESCE(SUM(i.clicks),0) AS clicks,
@@ -143,8 +146,9 @@ export async function listCreatives(): Promise<CreativeRow[]> {
       FROM ads a
       JOIN ad_sets s ON s.id = a.ad_set_id
       JOIN campaigns c ON c.id = s.campaign_id
+      LEFT JOIN books b ON b.id = c.book_id
       LEFT JOIN insights_daily i ON i.entity_id = a.meta_ad_id AND i.entity_type = 'ad'
-      GROUP BY a.id, c.id, c.parsed_book_title, c.name_raw
+      GROUP BY a.id, c.id, c.parsed_book_title, c.name_raw, b.id, b.title
       ORDER BY spend DESC
     `)) as unknown as Array<Record<string, unknown>>;
 
@@ -158,6 +162,11 @@ export async function listCreatives(): Promise<CreativeRow[]> {
         campaignId: String(r.campaign_id),
         campaignName:
           (r.parsed_book_title as string) || (r.name_raw as string) || null,
+        bookId: (r.book_id as string) ?? null,
+        bookTitle:
+          (r.book_title as string) ||
+          (r.parsed_book_title as string) ||
+          "Boshqa kreativlar",
         thumbnailUrl: (r.thumbnail_url as string) ?? null,
         spendUSD: agg.spend,
         impressions: agg.impressions,
