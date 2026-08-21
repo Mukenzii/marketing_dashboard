@@ -27,6 +27,33 @@ const rankBadge = (i: number) => {
   return medals[i] ?? `#${i + 1}`;
 };
 
+/**
+ * Creative thumbnail. Meta's fbcdn images block requests that carry a foreign
+ * `Referer`, so send none. Falls back to a placeholder if the URL is missing or
+ * still fails (e.g. an expired Meta URL) instead of a broken-image icon.
+ */
+function Thumb({ src, alt }: { src: string | null; alt: string }) {
+  const [failed, setFailed] = useState(false);
+  if (!src || failed) {
+    return (
+      <div className="flex size-14 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+        <ImageIcon className="size-5" />
+      </div>
+    );
+  }
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt={alt}
+      referrerPolicy="no-referrer"
+      loading="lazy"
+      onError={() => setFailed(true)}
+      className="size-14 shrink-0 rounded-lg object-cover"
+    />
+  );
+}
+
 function Metric({
   label,
   value,
@@ -57,18 +84,7 @@ function CreativeCard({ c, rank }: { c: CreativeRow; rank: number }) {
           <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-lg">
             {rankBadge(rank)}
           </div>
-          {c.thumbnailUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={c.thumbnailUrl}
-              alt={c.name}
-              className="size-14 shrink-0 rounded-lg object-cover"
-            />
-          ) : (
-            <div className="flex size-14 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-              <ImageIcon className="size-5" />
-            </div>
-          )}
+          <Thumb src={c.thumbnailUrl} alt={c.name} />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-card-foreground">
               {c.name}
